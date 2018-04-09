@@ -11,6 +11,8 @@ import numpy as np
 from scipy import sparse
 
 import pickle
+
+import gzip
 if '--step1' in sys.argv: # feat indexを作成
   fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/mnt/ssd/kaggle-talkingdata2/competition_files/train.csv')
 
@@ -80,4 +82,5 @@ if '--step2' in sys.argv:
      
     Xs.append( xs ); ys.append( y )
 
-  pickle.dump( (Xs, ys), open('files/data.pkl', 'wb'))
+  data = gzip.compress( pickle.dumps( (Xs, ys) ) )
+  open('files/data.pkl.gz', 'wb').write( data )
