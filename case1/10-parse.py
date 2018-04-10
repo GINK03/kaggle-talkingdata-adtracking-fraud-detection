@@ -13,6 +13,8 @@ from scipy import sparse
 import pickle
 
 import gzip
+
+import math
 if '--step1' in sys.argv: # feat indexを作成
   fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/mnt/ssd/kaggle-talkingdata2/competition_files/train.csv')
 
@@ -82,8 +84,7 @@ if '--step2' in sys.argv:
     del obj['is_attributed'] 
 
     ip_cat  = ip_freq[ obj['ip'] ] 
-    ip_cat  = 'ip_cat' + len(str(ip_freq))
-
+    ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
     ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
     # appはcategory
     app     = 'app:' + obj['app']
@@ -94,8 +95,8 @@ if '--step2' in sys.argv:
     # channelはcategory
     channel = 'channel:' + obj['channel']
    
-    xs = [feat_index[feat] for feat in [ip, app, device, os, channel]]
-     
+    xs = [feat_index[feat] for feat in [ip_cat, app, device, os, channel]]
+    xs.insert(0, ip_freq_lin) 
     Xs.append( xs ); ys.append( y )
 
   data = gzip.compress( pickle.dumps( (Xs, ys) ) )

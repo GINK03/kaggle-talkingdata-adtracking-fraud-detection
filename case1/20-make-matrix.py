@@ -14,7 +14,7 @@ import gzip
 # sparse matrixに変換してみる
 if '--step1' in sys.argv:
   feat_index = json.load(fp=open('files/feat_index.json') )
-  data = pickle.loads( gzip.decompress(open('files/data.pkl', 'rb').read()) )
+  data = pickle.loads( gzip.decompress(open('files/data.pkl.gz', 'rb').read()) )
 
   size = len(data)
   width = len(feat_index) 
@@ -24,7 +24,7 @@ if '--step1' in sys.argv:
 
   for index, one in enumerate(data):
     if index%1000 == 0:
-      print(f'now iter {index}')
+      print(f'make sparse now iter {index}')
     mat[ index, one ] = 1.0
 
   mat = mat.transpose().tocsr()
