@@ -37,8 +37,11 @@ if '--step1' in sys.argv: # feat indexを作成
       nclick_ip_freq[ip] += 1
 
 
-  print(feat_index)
-
   json.dump(click_ip_freq,  fp=open('files/click_ip_freq.json', 'w'), indent=2)
   json.dump(nclick_ip_freq,  fp=open('files/nclick_ip_freq.json', 'w'), indent=2)
+
+if '--step2' in sys.argv:
+  # logを取って、5分割とか
+  ...
+  
 
