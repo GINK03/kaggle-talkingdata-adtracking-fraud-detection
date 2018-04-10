@@ -14,12 +14,12 @@ import pickle
 
 import gzip
 if '--step1' in sys.argv: # feat indexを作成
-  fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/mnt/ssd/kaggle-talkingdata2/competition_files/train.csv')
-
-  head = next(fp).strip().split(',')
-
   click_ip_freq  = {}
   nclick_ip_freq = {}
+  
+  # train data
+  fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/mnt/ssd/kaggle-talkingdata2/competition_files/train.csv')
+  head = next(fp).strip().split(',')
   for index, line in enumerate(fp):
     if index%100000 == 0:
       print(f'now iter {index}')
@@ -35,7 +35,20 @@ if '--step1' in sys.argv: # feat indexを作成
       if nclick_ip_freq.get(ip) is None: 
         nclick_ip_freq[ip] = 0
       nclick_ip_freq[ip] += 1
-
+  
+  # test data
+  fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/test.csv')
+  head = next(fp).strip().split(',')
+  for index, line in enumerate(fp):
+    if index%100000 == 0:
+      print(f'now iter {index}')
+    val = line.strip().split(',')
+    obj = dict( zip(head, val) )
+    ip  = obj['ip']
+    # test dataはまとめてunclickとする
+    if nclick_ip_freq.get(ip) is None: 
+      nclick_ip_freq[ip] = 0
+    nclick_ip_freq[ip] += 1
 
   json.dump(click_ip_freq,  fp=open('files/click_ip_freq.json', 'w'), indent=2)
   json.dump(nclick_ip_freq,  fp=open('files/nclick_ip_freq.json', 'w'), indent=2)
