@@ -14,20 +14,31 @@ import gzip
 # sparse matrixに変換してみる
 if '--step1' in sys.argv:
   feat_index = json.load(fp=open('files/feat_index.json') )
-  data = pickle.loads( gzip.decompress(open('files/data.pkl.gz', 'rb').read()) )
+  Xs, ys = pickle.loads( gzip.decompress(open('files/data.pkl.gz', 'rb').read()) )
 
-  size = len(data)
+  size = len(Xs)
+  split = int(len(Xs)*0.8)
   width = len(feat_index) 
   print(size)
 
-  mat = sparse.dok_matrix((size, width), dtype=np.int8)
-
-  for index, one in enumerate(data):
-    if index%1000 == 0:
+  fp_train = open('files/test_train.svm', 'w')
+  fp_test = open('files/test_test.svm', 'w')
+  
+  for index, (xs, y) in enumerate(zip(Xs,ys)):
+    if index%100000 == 0 and index != 0:
       print(f'make sparse now iter {index}')
-    mat[ index, one ] = 1.0
+      print(text)
+    #print(xs)
+    ip_freq = xs.pop(0)
+    
+    bs = { feat_index['ip_freq_lin']:ip_freq }
+    for x in xs:
+      bs[x] = 1.0
 
-  mat = mat.transpose().tocsr()
-
-  mat = gzip.compress(pickle.dump(mat))
-  open('files/mat.pkl.gz', 'wb').write( mat )
+    bs = ' '.join( [f'{index}:{weight}' for index, weight in bs.items()] )
+    text = f'{y} {bs}\n'
+    if index >= split:
+      fp_test.write(text)
+    else:
+      fp_train.write(text)
+    
