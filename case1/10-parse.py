@@ -16,6 +16,7 @@ import gzip
 
 import math
 if '--step1' in sys.argv: # feat indexを作成
+  # test
   fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/mnt/ssd/kaggle-talkingdata2/competition_files/train.csv')
   head = next(fp).strip().split(',')
   feat_index = {}
@@ -26,6 +27,25 @@ if '--step1' in sys.argv: # feat indexを作成
     obj = dict( zip(head, val) )
     is_attributed = obj['is_attributed']
     del obj['is_attributed'] 
+    # appはcategory
+    app     = 'app:' + obj['app']
+    # deviceはcategory
+    device  = 'device:' + obj['device']
+    # osはcategory
+    os      = 'os:' + obj['os']
+    # channelはcategory
+    channel = 'channel:' + obj['channel']
+    for feat in [app, device, os, channel]:
+      if feat_index.get(feat) is None:
+        feat_index[feat] = len(feat_index)
+  # test
+  fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/test.csv')
+  head = next(fp).strip().split(',')
+  for index, line in enumerate(fp):
+    if index%100000 == 0:
+      print(f'now iter {index}')
+    val = line.strip().split(',')
+    obj = dict( zip(head, val) )
     # appはcategory
     app     = 'app:' + obj['app']
     # deviceはcategory
@@ -58,6 +78,35 @@ if '--step2' in sys.argv:
       ip_freq[ip] = 0
     ip_freq[ip] += freq
   feat_index = json.load(fp=open('files/feat_index.json'))
+  
+  # test data
+  fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/test.csv')
+  head = next(fp).strip().split(',')
+  Xs, ys = [], []
+  for index, line in enumerate(fp):
+    if index%100000 == 0:
+      print(f'now test iter {index}')
+    val = line.strip().split(',')
+    obj = dict( zip(head, val) )
+
+    ip_cat  = ip_freq[ obj['ip'] ] 
+    ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
+    ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
+    # appはcategory
+    app     = 'app:' + obj['app']
+    # deviceはcategory
+    device  = 'device:' + obj['device']
+    # osはcategory
+    os      = 'os:' + obj['os']
+    # channelはcategory
+    channel = 'channel:' + obj['channel']
+   
+    xs = [feat_index[feat] for feat in [ip_cat, app, device, os, channel]]
+    xs.insert(0, ip_freq_lin) 
+    Xs.append( xs )
+
+  data = gzip.compress( pickle.dumps( (Xs, ys) ) )
+  open('files/test.pkl.gz', 'wb').write( data )
 
   # train data
   fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/mnt/ssd/kaggle-talkingdata2/competition_files/train.csv')
@@ -93,31 +142,3 @@ if '--step2' in sys.argv:
   data = gzip.compress( pickle.dumps( (Xs, ys) ) )
   open('files/train_valid.pkl.gz', 'wb').write( data )
   
-  # test data
-  fp = open('../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/test.csv')
-  head = next(fp).strip().split(',')
-  Xs, ys = [], []
-  for index, line in enumerate(fp):
-    if index%100000 == 0:
-      print(f'now test iter {index}')
-    val = line.strip().split(',')
-    obj = dict( zip(head, val) )
-
-    ip_cat  = ip_freq[ obj['ip'] ] 
-    ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
-    ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
-    # appはcategory
-    app     = 'app:' + obj['app']
-    # deviceはcategory
-    device  = 'device:' + obj['device']
-    # osはcategory
-    os      = 'os:' + obj['os']
-    # channelはcategory
-    channel = 'channel:' + obj['channel']
-   
-    xs = [feat_index[feat] for feat in [ip_cat, app, device, os, channel]]
-    xs.insert(0, ip_freq_lin) 
-    Xs.append( xs )
-
-  data = gzip.compress( pickle.dumps( (Xs, ys) ) )
-  open('files/test.pkl.gz', 'wb').write( data )
