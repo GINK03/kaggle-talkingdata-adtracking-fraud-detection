@@ -1,12 +1,12 @@
 import json
 import hashlib
 
-num_leavess = [i for i in [63, 100]]
-fractions = [i/100.0 for i in [10, 50, 60,100]]
-bagging_freqs = [i for i in [5,10]]
-min_data_in_leafs = [i for i in [50,100]]
-min_sum_hessian_in_leafs = [i/10.0 for i in [50,100]]
-learning_rates = [ 0.025, 0.035]
+num_leavess = [63,70,80, 100]
+fractions = [0.10, 0.50, 0.60, 0.100]
+bagging_freqs = [5,10]
+min_data_in_leafs = [50,100]
+min_sum_hessian_in_leafs = [5,6,7,8]
+learning_rates = [0.001, 0.025, 0.035]
 
 for learning_rate in learning_rates:
   for num_leaves in num_leavess:
