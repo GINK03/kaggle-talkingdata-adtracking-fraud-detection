@@ -13,6 +13,7 @@ import numpy as np
 import gzip
 
 from pathlib import Path
+
 # sparse matrixに変換してみる
 if '--step1' in sys.argv:
   feat_index = json.load(fp=open('files/feat_index.json') )
