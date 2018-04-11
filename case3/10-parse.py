@@ -98,53 +98,46 @@ if '--step1' in sys.argv: # feat indexを作成
   json.dump(feat_index, fp=open('files/feat_index.json', 'w'), indent=2)
 
 if '--step2' in sys.argv:
-  ip_freq = {}
-  ip_freq1 = json.load(fp=open('./files/click_ip_freq.json'))
-  ip_freq2 = json.load(fp=open('./files/nclick_ip_freq.json'))
-  for ip, freq in ip_freq1.items():
-    if ip_freq.get(ip) is None:
-      ip_freq[ip] = 0
-    ip_freq[ip] += freq
-  for ip, freq in ip_freq2.items():
-    if ip_freq.get(ip) is None:
-      ip_freq[ip] = 0
-    ip_freq[ip] += freq
+  ip_freq = json.load(fp=open('./files/click_ip_freq.json'))
   feat_index = json.load(fp=open('files/feat_index.json'))
   
   # test data
   def _map_test(arg):
     key, path = arg
     Xs, ys = [], []
-    for index, line in enumerate(path.open()):
-      if index%100000 == 0:
-        print(f'now test iter {index}@{key}/{path}')
-      obj = json.loads(line.strip())
+    try:
+      for index, line in enumerate(path.open()):
+        if index%100000 == 0:
+          print(f'now test iter {index}@{key}/{path}')
+        obj = json.loads(line.strip())
 
-      # click timeをパース
-      click_time = obj['click_time']
-      dtime = datetime.strptime(click_time, '%Y-%m-%d %H:%M:%S')
-      #print(dtime.day, dtime.hour, dtime.minute)
-      time_lin = dtime.hour + dtime.minute/60.0
+        # click timeをパース
+        click_time = obj['click_time']
+        dtime = datetime.strptime(click_time, '%Y-%m-%d %H:%M:%S')
+        #print(dtime.day, dtime.hour, dtime.minute)
+        time_lin = dtime.hour + dtime.minute/60.0
 
-      ip_cat  = ip_freq[ obj['ip'] ] 
-      ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
-      ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
-      # appはcategory
-      app     = 'app:' + obj['app']
-      # deviceはcategory
-      device  = 'device:' + obj['device']
-      # osはcategory
-      os      = 'os:' + obj['os']
-      # channelはcategory
-      channel = 'channel:' + obj['channel']
-     
-      xs = [feat_index[feat] for feat in [app, device, os, channel]]
-      xs.insert(0, ip_freq_lin) 
-      xs.insert(0, time_lin) 
-      Xs.append( xs )
+        ip_cat  = ip_freq[ obj['ip'] ] 
+        ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
+        ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
+        # appはcategory
+        app     = 'app:' + obj['app']
+        # deviceはcategory
+        device  = 'device:' + obj['device']
+        # osはcategory
+        os      = 'os:' + obj['os']
+        # channelはcategory
+        channel = 'channel:' + obj['channel']
+       
+        xs = [feat_index[feat] for feat in [app, device, os, channel]]
+        xs.insert(0, ip_freq_lin) 
+        xs.insert(0, time_lin) 
+        Xs.append( xs )
 
-    data = gzip.compress( pickle.dumps( (Xs, ys) ) )
-    open(f'files/test_{key:09d}.pkl.gz', 'wb').write( data )
+      data = gzip.compress( pickle.dumps( (Xs, ys) ) )
+      open(f'files/test_{key:09d}.pkl.gz', 'wb').write( data )
+    except Exception as ex:
+      print(ex)
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('test_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     exe.map( _map_test, args )
