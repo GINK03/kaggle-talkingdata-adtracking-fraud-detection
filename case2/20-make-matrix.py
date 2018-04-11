@@ -57,7 +57,8 @@ if '--step1' in sys.argv:
 
       bs = ' '.join( [f'{index}:{weight}' for index, weight in bs.items()] )
       text = f'{y} {bs}\n'
-      if key%5 != 0:
+      # key%Nでサンプルレートを決定する
+      if key%20 == 0:
         fp_valid.write(text)
       else:
         fp_train.write(text)
