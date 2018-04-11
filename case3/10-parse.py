@@ -27,7 +27,7 @@ if '--step1' in sys.argv: # feat indexを作成
     feats = set()
     for index, line in enumerate(path.open()):
       if index%100000 == 0:
-        print(f'now iter {index}@{key}')
+        print(f'now iter {index}@{key}/{path}')
       obj  = json.loads(line.strip())
 
       is_attributed = obj['is_attributed']
@@ -55,7 +55,7 @@ if '--step1' in sys.argv: # feat indexを作成
     feats = set()
     for index, line in enumerate(path.open()):
       if index%100000 == 0:
-        print(f'now iter {index}@{key}')
+        print(f'now iter {index}@{key}/{path}')
       obj  = json.loads(line.strip())
       # appはcategory
       app     = 'app:' + obj['app']
@@ -70,13 +70,13 @@ if '--step1' in sys.argv: # feat indexを作成
     return feats
  
   feat_index = {}
-  args = [(index,path) for index, path in enumerate(Path('./files/data/').glob('train_*'))]
+  args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('train_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     for _feats in exe.map(_map_train, args):
       for feat in _feats:
         if feat_index.get(feat) is None:
           feat_index[feat] = len(feat_index)
-  args = [(index,path) for index, path in enumerate(Path('./files/data/').glob('test_*'))]
+  args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('test_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     for _feats in exe.map(_map_test, args):
       for feat in _feats:
@@ -117,7 +117,7 @@ if '--step2' in sys.argv:
     Xs, ys = [], []
     for index, line in enumerate(path.open()):
       if index%100000 == 0:
-        print(f'now test iter {index}@{key}')
+        print(f'now test iter {index}@{key}/{path}')
       obj = json.loads(line.strip())
 
       # click timeをパース
@@ -145,7 +145,7 @@ if '--step2' in sys.argv:
 
     data = gzip.compress( pickle.dumps( (Xs, ys) ) )
     open(f'files/test_{key:09d}.pkl.gz', 'wb').write( data )
-  args = [(index,path) for index, path in enumerate(Path('./files/data/').glob('test_*'))]
+  args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('test_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     exe.map( _map_test, args )
 
@@ -155,7 +155,7 @@ if '--step2' in sys.argv:
     Xs, ys = [], []
     for index, line in enumerate(path.open()):
       if index%100000 == 0:
-        print(f'now train_valid iter {index}@{key}')
+        print(f'now train_valid iter {index}@{key}/{path}')
       obj = json.loads( line.strip() )
 
       is_attributed = obj['is_attributed']
@@ -191,7 +191,7 @@ if '--step2' in sys.argv:
     open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
   
 
-  args = [(index,path) for index, path in enumerate(Path('./files/data/').glob('train_*'))]
+  args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('train_*')))]
   #_map_train(args[0]) 
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     exe.map( _map_train, args )
