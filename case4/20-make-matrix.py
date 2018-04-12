@@ -28,7 +28,7 @@ if '--step1' in sys.argv:
         print(text)
         print(xs)
       ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin = xs 
-      bs = { feat_index['ip_freq_lin']:ip_freq }
+      bs = { feat_index['ip_freq_lin']:ip_freq_lin }
       bs[ feat_index['time_lin'] ] = time_lin
       bs[ feat_index['app_freq_lin'] ] = app_freq_lin
       bs[ feat_index['ipXos_freq_lin'] ] = ipXos_freq_lin
