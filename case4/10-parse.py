@@ -149,6 +149,7 @@ if '--step2' in sys.argv:
         xs = [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
         Xs.append( xs )
 
+      Xs, ys = np.array(Xs), np.array(ys)
       data = gzip.compress( pickle.dumps( (Xs, ys) ) )
       open(f'files/test_{key:09d}.pkl.gz', 'wb').write( data )
     except Exception as ex:
@@ -202,6 +203,7 @@ if '--step2' in sys.argv:
         xs = [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
         Xs.append( xs ); ys.append( y )
 
+      Xs, ys = np.array(Xs), np.array(ys)
       data = gzip.compress( pickle.dumps( (Xs, ys) ) )
       open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
     except Exception as ex:
