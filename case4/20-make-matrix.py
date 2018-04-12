@@ -14,6 +14,7 @@ import gzip
 
 from pathlib import Path
 
+import random
 # sparse matrixに変換してみる
 if '--step1' in sys.argv:
   feat_index = json.load(fp=open('files/feat_index.json') )
@@ -44,7 +45,9 @@ if '--step1' in sys.argv:
   # write train 
   fp_train = open('files/test_train.svm', 'w')
   fp_valid = open('files/test_valid.svm', 'w')
-  fp_minitrain = open('files/test_minitrain.svm', 'w')
+
+  dist_fp = {}
+  fp_random = open('files/test_random.svm', 'w')
  
   for key, path in enumerate(sorted(Path('./files/').glob('train_valid_*.pkl.gz'))):
     Xs, ys = pickle.loads( gzip.decompress( path.open('rb').read() ) )
@@ -73,6 +76,10 @@ if '--step1' in sys.argv:
         fp_valid.write(text)
       else:
         fp_train.write(text)
-        if key%5 == 0:
-          fp_minitrain.write(text)
-   
+
+        if random.random() < 0.2:
+          fp_random.write( text )  
+        dist = index%10
+        if dist_fp.get(dist) is None:
+          dist_fp[dist] = open(f'files/test_minitrain_{dist:09d}.svm', 'w')
+        dist_fp[dist].write(text)
