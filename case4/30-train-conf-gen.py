@@ -1,3 +1,4 @@
+import os
 
 base = '''
 task = train
@@ -61,3 +62,5 @@ for dist in range(10):
 
   open(f'files/pred_{dist:09d}.conf', 'w').write( conf )
 
+for dist in range(10):
+  os.system(f'lightgbm config=files/train_{dist:09d}.conf')
