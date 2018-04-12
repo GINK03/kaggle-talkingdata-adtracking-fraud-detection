@@ -70,12 +70,15 @@ if '--step1' in sys.argv: # feat indexを作成
     return feats
  
   feat_index = {}
+
+  
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('train_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     for _feats in exe.map(_map_train, args):
       for feat in _feats:
         if feat_index.get(feat) is None:
           feat_index[feat] = len(feat_index)
+  
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('test_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     for _feats in exe.map(_map_test, args):
@@ -127,10 +130,10 @@ if '--step2' in sys.argv:
         ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
         ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
         # appはcategory
-        app     = 'app:' + obj['app']
+        app     = obj['app']
         app_freq_lin = app_freq[ obj['app'] ]
         # deviceはcategory
-        device  = 'device:' + obj['device']
+        device  = obj['device']
         # osはcategory
         os      = obj['os']
 
@@ -153,7 +156,6 @@ if '--step2' in sys.argv:
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('test_*')))]
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     exe.map( _map_test, args )
-
   # train data
   def _map_train(arg):
     key, path = arg
@@ -204,6 +206,7 @@ if '--step2' in sys.argv:
       open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
     except Exception as ex:
       print(ex)
+  
 
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('train_*')))]
   #_map_train(args[0]) 
