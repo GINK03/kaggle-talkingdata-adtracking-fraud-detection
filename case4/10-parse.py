@@ -103,7 +103,7 @@ if '--step1' in sys.argv: # feat indexを作成
   json.dump(feat_index, fp=open('files/feat_index.json', 'w'), indent=2)
 
 if '--step2' in sys.argv:
-  ip_freq, app_freq, ipXapp_freq, ipXos_freq, ipXappXos_freq = json.load(fp=open('./files/ip_freqs.json'))
+  ip_freq, app_freq, ipXapp_freq, ipXos_freq, ipXappXos_freq = json.load(fp=open('./files/freqs.json'))
   feat_index = json.load(fp=open('files/feat_index.json'))
   
   # test data
@@ -121,8 +121,8 @@ if '--step2' in sys.argv:
         dtime = datetime.strptime(click_time, '%Y-%m-%d %H:%M:%S')
         #print(dtime.day, dtime.hour, dtime.minute)
         time_lin = dtime.hour + dtime.minute/60.0
-
-        ip      = ip[ obj['ip'] ]
+        
+        ip = obj['ip']
         ip_cat  = ip_freq[ obj['ip'] ] 
         ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
         ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
@@ -132,7 +132,7 @@ if '--step2' in sys.argv:
         # deviceはcategory
         device  = 'device:' + obj['device']
         # osはcategory
-        os      = 'os:' + obj['os']
+        os      = obj['os']
 
         ipXos_freq_lin = ipXos_freq[ f'{ip}_x_{os}' ] 
         ipXapp_freq_lin = ipXapp_freq[ f'{ip}_x_{app}' ] 
@@ -158,43 +158,52 @@ if '--step2' in sys.argv:
   def _map_train(arg):
     key, path = arg
     Xs, ys = [], []
-    for index, line in enumerate(path.open()):
-      if index%100000 == 0:
-        print(f'now train_valid iter {index}@{key}/{path}')
-      obj = json.loads( line.strip() )
+    try:
+      for index, line in enumerate(path.open()):
+        if index%100000 == 0:
+          print(f'now train_valid iter {index}@{key}/{path}')
+        obj = json.loads( line.strip() )
 
-      is_attributed = obj['is_attributed']
+        is_attributed = obj['is_attributed']
 
-      y = 1.0 if is_attributed == '1' else 0.0
+        y = 1.0 if is_attributed == '1' else 0.0
 
-      del obj['is_attributed'] 
-      
-      # click timeをパース
-      click_time = obj['click_time']
-      dtime = datetime.strptime(click_time, '%Y-%m-%d %H:%M:%S')
-      #print(dtime.day, dtime.hour, dtime.minute)
-      time_lin = dtime.hour + dtime.minute/60.0
+        del obj['is_attributed'] 
+        
+        # click timeをパース
+        click_time = obj['click_time']
+        dtime = datetime.strptime(click_time, '%Y-%m-%d %H:%M:%S')
+        #print(dtime.day, dtime.hour, dtime.minute)
+        time_lin = dtime.hour + dtime.minute/60.0
+        
+        ip      = obj['ip']
+        ip_cat  = ip_freq[ obj['ip'] ] 
+        ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
+        ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
+        # appはcategory
+        app     = obj['app']
+        app_freq_lin = app_freq[ obj['app'] ]
+        # deviceはcategory
+        device  = 'device:' + obj['device']
+        # osはcategory
+        os      = obj['os']
 
-      ip_cat  = ip_freq[ obj['ip'] ] 
-      ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
-      ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
-      # appはcategory
-      app     = 'app:' + obj['app']
-      # deviceはcategory
-      device  = 'device:' + obj['device']
-      # osはcategory
-      os      = 'os:' + obj['os']
-      # channelはcategory
-      channel = 'channel:' + obj['channel']
-     
-      xs = [feat_index[feat] for feat in [app, device, os, channel]]
-      xs.insert(0, ip_freq_lin) 
-      xs.insert(0, time_lin) 
-      Xs.append( xs ); ys.append( y )
+        ipXos_freq_lin = ipXos_freq[ f'{ip}_x_{os}' ] 
+        ipXapp_freq_lin = ipXapp_freq[ f'{ip}_x_{app}' ] 
+        ipXappXos_freq_lin = ipXappXos_freq[ f'{ip}_x_{app}_x_{os}' ] 
+        # channelはcategory
+        channel = 'channel:' + obj['channel']
 
-    data = gzip.compress( pickle.dumps( (Xs, ys) ) )
-    open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
-  
+        #xs = [feat_index[feat] for feat in [app, device, os, channel]]
+        #xs.insert(0, ip_freq_lin) 
+        #xs.insert(0, time_lin) 
+        xs = [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
+        Xs.append( xs ); ys.append( y )
+
+      data = gzip.compress( pickle.dumps( (Xs, ys) ) )
+      open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
+    except Exception as ex:
+      print(ex)
 
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('train_*')))]
   #_map_train(args[0]) 

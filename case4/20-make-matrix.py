@@ -27,12 +27,15 @@ if '--step1' in sys.argv:
         print(f'make sparse now iter {index}@{key}/{path}')
         print(text)
         print(xs)
-      ip_freq = xs.pop(0)
-      time_lin = xs.pop(0) 
+      ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin = xs 
       bs = { feat_index['ip_freq_lin']:ip_freq }
       bs[ feat_index['time_lin'] ] = time_lin
-      for x in xs:
-        bs[x] = 1.0
+      bs[ feat_index['app_freq_lin'] ] = app_freq_lin
+      bs[ feat_index['ipXos_freq_lin'] ] = ipXos_freq_lin
+      bs[ feat_index['ipXapp_freq_lin'] ] = ipXapp_freq_lin
+      bs[ feat_index['ipXappXos_freq_lin'] ] = ipXappXos_freq_lin
+      #for x in xs:
+      #  bs[x] = 1.0
 
       bs = ' '.join( [f'{index}:{weight}' for index, weight in bs.items()] )
       text = f'0.0 {bs}\n'
@@ -50,14 +53,16 @@ if '--step1' in sys.argv:
       if index%100000 == 0 and index != 0:
         print(f'make sparse now iter {index}@{key}/{path}')
         print(text)
-      #print(xs)
-      ip_freq = xs.pop(0)
-      time_lin = xs.pop(0) 
       
+      ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin = xs 
       bs = { feat_index['ip_freq_lin']:ip_freq }
       bs[ feat_index['time_lin'] ] = time_lin
-      for x in xs:
-        bs[x] = 1.0
+      bs[ feat_index['app_freq_lin'] ] = app_freq_lin
+      bs[ feat_index['ipXos_freq_lin'] ] = ipXos_freq_lin
+      bs[ feat_index['ipXapp_freq_lin'] ] = ipXapp_freq_lin
+      bs[ feat_index['ipXappXos_freq_lin'] ] = ipXappXos_freq_lin
+      #for x in xs:
+      #  bs[x] = 1.0
 
       bs = ' '.join( [f'{index}:{weight}' for index, weight in bs.items()] )
       text = f'{y} {bs}\n'
