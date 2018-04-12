@@ -45,8 +45,8 @@ if '--step1' in sys.argv: # feat indexを作成
       # osはcategory
       os      = 'os:' + obj['os']
       # channelはcategory
-      channel = 'channel:' + obj['channel']
-      for feat in [app, device, os, channel]:
+      #channel = 'channel:' + obj['channel']
+      for feat in [app, device, os]:#, channel]:
         feats.add(feat)
     return feats
   # test
@@ -64,8 +64,8 @@ if '--step1' in sys.argv: # feat indexを作成
       # osはcategory
       os      = 'os:' + obj['os']
       # channelはcategory
-      channel = 'channel:' + obj['channel']
-      for feat in [app, device, os, channel]:
+      #channel = 'channel:' + obj['channel']
+      for feat in [app, device, os]:#, channel]:
         feats.add(feat)
     return feats
  
@@ -125,28 +125,28 @@ if '--step2' in sys.argv:
         #print(dtime.day, dtime.hour, dtime.minute)
         time_lin = dtime.hour + dtime.minute/60.0
         
-        ip = obj['ip']
+        ip      = obj['ip']
         ip_cat  = ip_freq[ obj['ip'] ] 
         ip_cat  = 'ip_cat:{}'.format( len(str(ip_cat)) )
         ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
         # appはcategory
         app     = obj['app']
+        app_cat = app
         app_freq_lin = app_freq[ obj['app'] ]
         # deviceはcategory
-        device  = obj['device']
+        device_cat = obj['device']
         # osはcategory
         os      = obj['os']
+        os_cat  = obj['os']
 
         ipXos_freq_lin = ipXos_freq[ f'{ip}_x_{os}' ] 
         ipXapp_freq_lin = ipXapp_freq[ f'{ip}_x_{app}' ] 
         ipXappXos_freq_lin = ipXappXos_freq[ f'{ip}_x_{app}_x_{os}' ] 
         # channelはcategory
-        channel = 'channel:' + obj['channel']
+        channel_cat = obj['channel']
        
-        #xs = [feat_index[feat] for feat in [app, device, os, channel]]
-        #xs.insert(0, ip_freq_lin) 
-        #xs.insert(0, time_lin) 
-        xs = [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
+        xs = [float(x) for x in [app_cat, device_cat, os_cat, channel_cat]]
+        xs += [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
         Xs.append( xs )
 
       Xs, ys = np.array(Xs), np.array(ys)
@@ -161,8 +161,8 @@ if '--step2' in sys.argv:
   def _map_train(arg):
     key, path = arg
     Xs, ys = [], []
-    try:
-      for index, line in enumerate(path.open()):
+    for index, line in enumerate(path.open()):
+      try:
         if index%100000 == 0:
           print(f'now train_valid iter {index}@{key}/{path}')
         obj = json.loads( line.strip() )
@@ -185,29 +185,36 @@ if '--step2' in sys.argv:
         ip_freq_lin = math.log( ip_freq[ obj['ip'] ] )
         # appはcategory
         app     = obj['app']
+        app_cat = app
+
         app_freq_lin = app_freq[ obj['app'] ]
         # deviceはcategory
-        device  = 'device:' + obj['device']
+        device_cat  = obj['device']
         # osはcategory
         os      = obj['os']
+        os_cat  = obj['os']
+        
 
         ipXos_freq_lin = ipXos_freq[ f'{ip}_x_{os}' ] 
         ipXapp_freq_lin = ipXapp_freq[ f'{ip}_x_{app}' ] 
         ipXappXos_freq_lin = ipXappXos_freq[ f'{ip}_x_{app}_x_{os}' ] 
         # channelはcategory
-        channel = 'channel:' + obj['channel']
+        channel_cat = obj['channel']
 
         #xs = [feat_index[feat] for feat in [app, device, os, channel]]
         #xs.insert(0, ip_freq_lin) 
         #xs.insert(0, time_lin) 
-        xs = [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
+        #for feat in [app_cat, device_cat, os_cat]:
+        #  xs[ feat_index[feat]] = 1.0
+        xs = [float(x) for x in [app_cat, device_cat, os_cat, channel_cat]]
+        xs += [ip_freq_lin, time_lin, app_freq_lin, ipXos_freq_lin, ipXapp_freq_lin, ipXappXos_freq_lin ] 
         Xs.append( xs ); ys.append( y )
+      except Exception as ex:
+        print(ex)
 
-      Xs, ys = np.array(Xs), np.array(ys)
-      data = gzip.compress( pickle.dumps( (Xs, ys) ) )
-      open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
-    except Exception as ex:
-      print(ex)
+    Xs, ys = np.array(Xs), np.array(ys)
+    data = gzip.compress( pickle.dumps( (Xs, ys) ) )
+    open(f'files/train_valid_{key:09d}.pkl.gz', 'wb').write( data )
   
 
   args = [(index,path) for index, path in enumerate(sorted(Path('./files/data/').glob('train_*')))]
