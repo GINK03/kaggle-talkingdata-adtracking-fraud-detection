@@ -9,78 +9,82 @@ import pickle
 import gzip
 import os
 import sys
+import random
+import json
+import hashlib
 
 if '--prepare' in sys.argv:
-  path = 'inputs/'
-  dtypes = {
-          'ip'            : 'uint32',
-          'app'           : 'uint16',
-          'device'        : 'uint16',
-          'os'            : 'uint16',
-          'channel'       : 'uint16',
-          'is_attributed' : 'uint8',
-          'click_id'      : 'uint32'
-          }
 
-  print('load train...')
-  train_df = pd.read_csv(path+"train.csv", skiprows=range(1,144903891), nrows=40000000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
-  print('load test...')
-  test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
+  for window in [ i*5000_000 for i in range(10) ]:
+    path = 'inputs/'
+    dtypes = {
+            'ip'            : 'uint32',
+            'app'           : 'uint16',
+            'device'        : 'uint16',
+            'os'            : 'uint16',
+            'channel'       : 'uint16',
+            'is_attributed' : 'uint8',
+            'click_id'      : 'uint32'
+            }
+    print('load train...')
+    train_df = pd.read_csv(path+"train.csv", skiprows=range(1,144903891-window), nrows=30_000_000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+    print('load test...')
+    test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
-  len_train = len(train_df)
-  train_df  = train_df.append(test_df)
+    len_train = len(train_df)
+    train_df  = train_df.append(test_df)
 
-  print('data prep...')
-  train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
-  train_df['day']  = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
+    print('data prep...')
+    train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
+    train_df['day']  = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 
-  # # of clicks for each ip-day-hour combination
-  print('group by...')
-  gp = train_df[['ip', 'day', 'hour', 'channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
-  print('merge...')
-  train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
+    # # of clicks for each ip-day-hour combination
+    print('group by...')
+    gp = train_df[['ip', 'day', 'hour', 'channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
 
-  # # of clicks for each ip-app combination
-  print('group by...')
-  gp = train_df[['ip', 'app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
-  train_df = train_df.merge(gp, on=['ip','app'], how='left')
+    # # of clicks for each ip-app combination
+    print('group by...')
+    gp = train_df[['ip', 'app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
+    train_df = train_df.merge(gp, on=['ip','app'], how='left')
 
-  # # of clicks for each ip-app-os combination
-  print('group by...')
-  gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
-  train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
+    # # of clicks for each ip-app-os combination
+    print('group by...')
+    gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
+    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
 
-  print("vars and data type: ")
-  train_df['qty']             = train_df['qty'].astype('uint16')
-  train_df['ip_app_count']    = train_df['ip_app_count'].astype('uint16')
-  train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
+    print("vars and data type: ")
+    train_df['qty']             = train_df['qty'].astype('uint16')
+    train_df['ip_app_count']    = train_df['ip_app_count'].astype('uint16')
+    train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 
-  # # of clicks for each ip-day-hour combination
-  print('group by...')
-  gp = train_df[['ip', 'day', 'hour', 'os', 'channel']].groupby(by=['ip', 'day', 'hour', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_hour_count'})
-  print('merge...')
-  train_df = train_df.merge(gp, on=['ip','day','hour', 'os'], how='left')
+    # # of clicks for each ip-day-hour combination
+    print('group by...')
+    gp = train_df[['ip', 'day', 'hour', 'os', 'channel']].groupby(by=['ip', 'day', 'hour', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_hour_count'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['ip','day','hour', 'os'], how='left')
 
-  # # of clicks for each ip-day-hour combination
-  print('group by...')
-  gp = train_df[['ip', 'os', 'app', 'day', 'hour', 'channel']].groupby(by=['ip', 'os', 'app', 'day', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_app_hour_count'})
-  print('merge...')
-  train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'day','hour'], how='left')
+    # # of clicks for each ip-day-hour combination
+    print('group by...')
+    gp = train_df[['ip', 'os', 'app', 'day', 'hour', 'channel']].groupby(by=['ip', 'os', 'app', 'day', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_app_hour_count'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'day','hour'], how='left')
 
-  test_df  = train_df[len_train:]
-  val_df   = train_df[(len_train-3000000):len_train]
-  train_df = train_df[:(len_train-3000000)]
+    test_df  = train_df[len_train:]
+    val_df   = train_df[(len_train-3000000):len_train]
+    train_df = train_df[:(len_train-3000000)]
 
-  print("train size: ", len(train_df))
-  print("valid size: ", len(val_df))
-  print("test size : ", len(test_df))
+    print("train size: ", len(train_df))
+    print("valid size: ", len(val_df))
+    print("test size : ", len(test_df))
 
-  sub = pd.DataFrame()
-  sub['click_id'] = test_df['click_id'].astype('int')
+    sub = pd.DataFrame()
+    sub['click_id'] = test_df['click_id'].astype('int')
 
-  train_df.to_pickle(f'files/train_df.pkl.gz', 'gzip')
-  val_df.to_pickle(f'files/val_df.pkl.gz',  'gzip')
-  test_df.to_pickle(f'files/test_df.pkl.gz', 'gzip')
+    train_df.to_pickle( f'files/train_df_{window:12d}.pkl.gz', 'gzip')
+    val_df.to_pickle(   f'files/val_df_{window:12d}.pkl.gz',    'gzip')
+    test_df.to_pickle(  f'files/test_df_{window:12d}.pkl.gz',   'gzip')
 
 if '--train' in sys.argv:
   print('load to pickle files')
@@ -98,6 +102,7 @@ if '--train' in sys.argv:
 
   print("Training...")
   params = {
+    'seed':             random.choice( [999+i for i in range(10)] ),
     'boosting_type':    'gbdt',
     'objective':        'binary',
     'metric':           ['auc'],
@@ -117,6 +122,8 @@ if '--train' in sys.argv:
     'reg_lambda':       0,  # L2 regularization term on weights
     'verbose':          0,
   }
+  obj = json.dumps( params, indent=2 )
+  hash = hashlib.sha256(bytes(obj, 'utf8')).hexdigest()
 
   xgtrain = lgb.Dataset(train_df[predictors].values, label=train_df[target].values,
                         feature_name=predictors,
@@ -133,7 +140,7 @@ if '--train' in sys.argv:
                    valid_sets            = [xgtrain, xgvalid], 
                    valid_names           = ['train','valid'], 
                    evals_result          = evals_results, 
-                   num_boost_round       = 800,
+                   num_boost_round       = 2000,
                    early_stopping_rounds = 50,
                    verbose_eval          = 10, 
                    feval                 = None)
@@ -147,5 +154,7 @@ if '--train' in sys.argv:
   print("Predicting...")
   sub['is_attributed'] = bst1.predict(test_df[predictors])
   print("writing...")
-  sub.to_csv(f'lgb_balanced_{auc:0.012f}.csv',index=False)
+  sub.to_csv(f'submission_{auc:0.012f}_{hash}.csv',index=False)
+  open(f'params/{hash}', 'w').write( obj )
+
   print("done...")
