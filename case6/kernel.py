@@ -16,7 +16,6 @@ import hashlib
 if '--prepare' in sys.argv:
 
   for window in [ i*5000_000 for i in range(10) ]:
-    path = 'inputs/'
     dtypes = {
             'ip'            : 'uint32',
             'app'           : 'uint16',
@@ -27,9 +26,9 @@ if '--prepare' in sys.argv:
             'click_id'      : 'uint32'
             }
     print('load train...')
-    train_df = pd.read_csv(path+"train.csv", skiprows=range(1,144903891-window), nrows=30_000_000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+    train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,144_903_891-window), nrows=40_000_000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
     print('load test...')
-    test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
+    test_df = pd.read_csv("inputs/test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
     len_train = len(train_df)
     train_df  = train_df.append(test_df)
@@ -61,100 +60,107 @@ if '--prepare' in sys.argv:
 
     # # of clicks for each ip-day-hour combination
     print('group by...')
-    gp = train_df[['ip', 'day', 'hour', 'os', 'channel']].groupby(by=['ip', 'day', 'hour', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_hour_count'})
+    gp = train_df[['ip', 'hour', 'os', 'channel']].groupby(by=['ip', 'hour', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_hour_count'})
     print('merge...')
-    train_df = train_df.merge(gp, on=['ip','day','hour', 'os'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'hour', 'os'], how='left')
 
     # # of clicks for each ip-day-hour combination
     print('group by...')
-    gp = train_df[['ip', 'os', 'app', 'day', 'hour', 'channel']].groupby(by=['ip', 'os', 'app', 'day', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_app_hour_count'})
+    gp = train_df[['ip', 'os', 'app', 'hour', 'channel']].groupby(by=['ip', 'os', 'app', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_app_hour_count'})
     print('merge...')
-    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'day','hour'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'hour'], how='left')
 
+    # ここを編集した
     test_df  = train_df[len_train:]
-    val_df   = train_df[(len_train-3000000):len_train]
-    train_df = train_df[:(len_train-3000000)]
+    val_df   = train_df[:3000000]
+    train_df = train_df[3000000:len_train]
 
+    print('train size: ', len(train_df))
+    print('valid size: ', len(val_df))
+    print('test size : ', len(test_df))
+
+
+    train_df.to_pickle( f'files/train_df_{window:012d}.pkl.gz',  'gzip')
+    val_df.to_pickle(   f'files/val_df_{window:012d}.pkl.gz',    'gzip')
+    test_df.to_pickle(  f'files/test_df_{window:012d}.pkl.gz',   'gzip')
+
+if '--train' in sys.argv:
+  windows = [window for window in [ i*5000_000 for i in range(10) ]]
+  random.shuffle(windows)
+  for window in windows:
+    print('load to pickle files')
+    try:
+      train_df    = pd.read_pickle(f'files/train_df_{window:012d}.pkl.gz', 'gzip')
+      val_df      = pd.read_pickle(f'files/val_df_{window:012d}.pkl.gz', 'gzip')
+      test_df     = pd.read_pickle(f'files/test_df_{window:012d}.pkl.gz', 'gzip')
+    except Exception as ex:
+      print(ex)
+      continue
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
+    
+    target      = 'is_attributed'
+    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count']
+    categorical = ['app', 'device', 'os', 'channel', 'hour']
 
+    print("Training...")
+    params = {
+      'seed':             random.choice( [999+i for i in range(10)] ),
+      'boosting_type':    'gbdt',
+      'objective':        'binary',
+      'metric':           ['auc'],
+      'learning_rate':    random.choice([0.085, 0.100]),
+      'scale_pos_weight': 99, # because training data is extremely unbalanced 
+      'num_leaves':       7,  # we should let it be smaller than 2^(max_depth)
+      'max_depth':        random.choice([3,4]),  # -1 means no limit
+      'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
+      'max_bin':          100,  # Number of bucketed bin for feature values
+      'subsample':        0.7,  # Subsample ratio of the training instance.
+      'subsample_freq':   1,  # frequence of subsample, <=0 means no enable
+      'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
+      'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
+      'subsample_for_bin': 200000,  # Number of samples for constructing bin
+      'min_split_gain':   0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
+      'reg_alpha':        0,  # L1 regularization term on weights
+      'reg_lambda':       0,  # L2 regularization term on weights
+      'verbose':          0,
+    }
+    obj = json.dumps( params, indent=2 )
+    hash = hashlib.sha256(bytes(obj, 'utf8')).hexdigest()
+
+    xgtrain = lgb.Dataset(train_df[predictors].values, label=train_df[target].values,
+                          feature_name=predictors,
+                          categorical_feature=categorical
+                          )
+    xgvalid = lgb.Dataset(val_df[predictors].values, label=val_df[target].values,
+                          feature_name=predictors,
+                          categorical_feature=categorical
+                          )
+
+    evals_results = {}
+    bst1 = lgb.train(params, 
+                     xgtrain, 
+                     valid_sets            = [xgtrain, xgvalid], 
+                     valid_names           = ['train','valid'], 
+                     evals_result          = evals_results, 
+                     num_boost_round       = 2000,
+                     early_stopping_rounds = 50,
+                     verbose_eval          = 10, 
+                     feval                 = None)
+
+    n_estimators = bst1.best_iteration
+    print("Model Report")
+    print("n_estimators : ", n_estimators)
+    auc = evals_results['valid']['auc'][n_estimators-1]
+    print("auc:", auc)
+
+    print("Predicting...")
     sub = pd.DataFrame()
     sub['click_id'] = test_df['click_id'].astype('int')
+    sub['is_attributed'] = bst1.predict(test_df[predictors])
+    print("writing...")
+    sub.to_csv(f'submission_{auc:0.012f}_{hash}.csv',index=False)
+    open(f'files/params/{hash}', 'w').write( obj )
 
-    train_df.to_pickle( f'files/train_df_{window:12d}.pkl.gz', 'gzip')
-    val_df.to_pickle(   f'files/val_df_{window:12d}.pkl.gz',    'gzip')
-    test_df.to_pickle(  f'files/test_df_{window:12d}.pkl.gz',   'gzip')
-
-if '--train' in sys.argv:
-  print('load to pickle files')
-  train_df    = pd.read_pickle(f'files/train_df.pkl.gz', 'gzip')
-  val_df      = pd.read_pickle(f'files/val_df.pkl.gz', 'gzip')
-  test_df     = pd.read_pickle(f'files/test_df.pkl.gz', 'gzip')
-  
-  print("train size: ", len(train_df))
-  print("valid size: ", len(val_df))
-  print("test size : ", len(test_df))
-  
-  target      = 'is_attributed'
-  predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count']
-  categorical = ['app', 'device', 'os', 'channel', 'hour']
-
-  print("Training...")
-  params = {
-    'seed':             random.choice( [999+i for i in range(10)] ),
-    'boosting_type':    'gbdt',
-    'objective':        'binary',
-    'metric':           ['auc'],
-    'learning_rate':    0.1,
-    'scale_pos_weight': 99, # because training data is extremely unbalanced 
-    'num_leaves':       7,  # we should let it be smaller than 2^(max_depth)
-    'max_depth':        3,  # -1 means no limit
-    'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
-    'max_bin':          100,  # Number of bucketed bin for feature values
-    'subsample':        0.7,  # Subsample ratio of the training instance.
-    'subsample_freq':   1,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
-    'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-    'subsample_for_bin': 200000,  # Number of samples for constructing bin
-    'min_split_gain':   0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
-    'reg_alpha':        0,  # L1 regularization term on weights
-    'reg_lambda':       0,  # L2 regularization term on weights
-    'verbose':          0,
-  }
-  obj = json.dumps( params, indent=2 )
-  hash = hashlib.sha256(bytes(obj, 'utf8')).hexdigest()
-
-  xgtrain = lgb.Dataset(train_df[predictors].values, label=train_df[target].values,
-                        feature_name=predictors,
-                        categorical_feature=categorical
-                        )
-  xgvalid = lgb.Dataset(val_df[predictors].values, label=val_df[target].values,
-                        feature_name=predictors,
-                        categorical_feature=categorical
-                        )
-
-  evals_results = {}
-  bst1 = lgb.train(params, 
-                   xgtrain, 
-                   valid_sets            = [xgtrain, xgvalid], 
-                   valid_names           = ['train','valid'], 
-                   evals_result          = evals_results, 
-                   num_boost_round       = 2000,
-                   early_stopping_rounds = 50,
-                   verbose_eval          = 10, 
-                   feval                 = None)
-
-  n_estimators = bst1.best_iteration
-  print("Model Report")
-  print("n_estimators : ", n_estimators)
-  auc = evals_results['valid']['auc'][n_estimators-1]
-  print("auc:", auc)
-
-  print("Predicting...")
-  sub['is_attributed'] = bst1.predict(test_df[predictors])
-  print("writing...")
-  sub.to_csv(f'submission_{auc:0.012f}_{hash}.csv',index=False)
-  open(f'params/{hash}', 'w').write( obj )
-
-  print("done...")
+    print("done...")
