@@ -70,25 +70,18 @@ if '--predict' in sys.argv:
 
 if '--ensemble' in sys.argv:
   # bind train-data
-  if '--step1' in sys.argv:
-    yps = []
-    for path in sorted(Path('./files/predicts/').glob('*')):
-      yp = pickle.loads(gzip.decompress(open(f'{path}', 'rb').read()))
+  yps = []
+  for path in sorted(Path('./files/predicts/').glob('*')):
+    yp = pickle.loads(gzip.decompress(open(f'{path}', 'rb').read()))
 
-      size = yp.shape[0]
-      yps.append( yp.reshape(size, 1) )
-    yps = np.concatenate( tuple(yps), axis=1 )
-    print(yps.shape)
+    size = yp.shape[0]
+    yps.append( yp.reshape(size, 1) )
+  yps = np.concatenate( tuple(yps), axis=1 )
+  print(yps.shape)
+  yps = np.mean(yps, axis=1)
       
-  '''
   fp = open(f'files/submission.csv', 'w')
   fp.write('click_id,is_attributed\n')
-  count = 0
-  for path in sorted(Path('files/').glob('test_*.pkl.gz')):
-    print(path)
-    Xst, yst = pickle.loads(gzip.decompress(open(f'{path}', 'rb').read()))
-    yp = model.predict_proba(Xst)[:,1]
-    for y in yp.tolist():
-      fp.write(f'{count},{y:0.09f}\n')
-      count += 1
-  '''
+  for count, y in enumerate(yps.tolist()):
+    fp.write(f'{count},{y:0.09f}\n')
+    count += 1
