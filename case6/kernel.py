@@ -13,20 +13,25 @@ import random
 import json
 import hashlib
 
+dtypes = {
+        'ip'            : 'uint32',
+        'app'           : 'uint16',
+        'device'        : 'uint16',
+        'os'            : 'uint16',
+        'channel'       : 'uint16',
+        'is_attributed' : 'uint8',
+        'click_id'      : 'uint32',
+        'qty'           : 'uint16',
+        'ip_app_count'  : 'uint16',
+        'ip_app_os_count': 'uint16',
+        'ip_os_hour_count': 'uint16', 
+        'p_os_app_hour_count': 'uint16',
+        }
 if '--prepare' in sys.argv:
-
-  for window in [ i*5000_000 for i in range(10) ]:
-    dtypes = {
-            'ip'            : 'uint32',
-            'app'           : 'uint16',
-            'device'        : 'uint16',
-            'os'            : 'uint16',
-            'channel'       : 'uint16',
-            'is_attributed' : 'uint8',
-            'click_id'      : 'uint32'
-            }
+    #for window in [ i*500_000 for i in range(100) ]:
+    window =  0 
     print('load train...')
-    train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,144_903_891-window), nrows=40_000_000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+    train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,144903891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
     print('load test...')
     test_df = pd.read_csv("inputs/test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
@@ -72,27 +77,30 @@ if '--prepare' in sys.argv:
 
     # ここを編集した
     test_df  = train_df[len_train:]
-    val_df   = train_df[:3000000]
-    train_df = train_df[3000000:len_train]
+    val_df   = train_df[(len_train-3000000):len_train]
+    train_df = train_df[:(len_train-3000000)]
 
     print('train size: ', len(train_df))
     print('valid size: ', len(val_df))
     print('test size : ', len(test_df))
 
 
-    train_df.to_pickle( f'files/train_df_{window:012d}.pkl.gz',  'gzip')
-    val_df.to_pickle(   f'files/val_df_{window:012d}.pkl.gz',    'gzip')
-    test_df.to_pickle(  f'files/test_df_{window:012d}.pkl.gz',   'gzip')
-
+    #train_df.to_pickle( f'files/train_df_{window:012d}.pkl.gz',  'gzip')
+    #val_df.to_pickle(   f'files/val_df_{window:012d}.pkl.gz',    'gzip')
+    #test_df.to_pickle(  f'files/test_df_{window:012d}.pkl.gz',   'gzip')
+    train_df.to_csv( f'files/train_df_{window:012d}.csv')
+    val_df.to_csv(   f'files/val_df_{window:012d}.csv')
+    test_df.to_csv(  f'files/test_df_{window:012d}.csv')
 if '--train' in sys.argv:
-  windows = [window for window in [ i*5000_000 for i in range(10) ]]
-  random.shuffle(windows)
-  for window in windows:
-    print('load to pickle files')
+  trials = [ i for i in range(100) ]
+  random.shuffle(trials)
+  for trial in trials:
+    window = 0
     try:
-      train_df    = pd.read_pickle(f'files/train_df_{window:012d}.pkl.gz', 'gzip')
-      val_df      = pd.read_pickle(f'files/val_df_{window:012d}.pkl.gz', 'gzip')
-      test_df     = pd.read_pickle(f'files/test_df_{window:012d}.pkl.gz', 'gzip')
+      print('load to csv files')
+      train_df = pd.read_csv(f'files/train_df_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count'])
+      val_df = pd.read_csv(f'files/val_df_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count'])
+      test_df = pd.read_csv(f'files/test_df_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count'])
     except Exception as ex:
       print(ex)
       continue
@@ -154,13 +162,16 @@ if '--train' in sys.argv:
     print("n_estimators : ", n_estimators)
     auc = evals_results['valid']['auc'][n_estimators-1]
     print("auc:", auc)
-
+    
+    print('clear memory of dataset.')
+    del xgtrain; del xgvalid 
+    gc.collect()
     print("Predicting...")
     sub = pd.DataFrame()
-    sub['click_id'] = test_df['click_id'].astype('int')
+    sub['click_id']      = test_df['click_id'].astype('int')
     sub['is_attributed'] = bst1.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(f'submission_{auc:0.012f}_{hash}.csv',index=False)
+    sub.to_csv(f'submission_{auc:0.012f}_{window:012d}_{hash}.csv',index=False)
     open(f'files/params/{hash}', 'w').write( obj )
 
     print("done...")
