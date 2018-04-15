@@ -24,13 +24,14 @@ if '--pickle' in sys.argv:
     for vals in it:
       obj = dict(zip(head,vals)) 
       strtime = obj['click_time']
-      ip      = obj['ip']
+      ip      = f'{obj["ip"]}_{obj["channel"]}'
       dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
-      dh = f'{dt.day:02d}_{dt.hour:02d}'
+      dh = f'{dt.hour:02d}_{dt.minute//10:01d}'
+      
       if ip_dh_f.get(ip) is None:
         ip_dh_f[ip] = {}
       if ip_dh_f[ip].get(dh) is None:
-        ip_dh_f[ip][dh] = -1
+        ip_dh_f[ip][dh] = 0
       ip_dh_f[ip][dh] += 1
 
     for ip, dh_f in ip_dh_f.items():
@@ -60,9 +61,9 @@ if '--convert' in sys.argv:
     for vals in it:
       obj     = dict(zip(head,vals)) 
       strtime = obj['click_time']
-      ip      = obj['ip']
+      ip      = f'{obj["ip"]}_{obj["channel"]}'
       dt      = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
-      dh      = f'{dt.day:02d}_{dt.hour:02d}'
+      dh       = f'{dt.hour:02d}_{dt.minute//10:01d}'
       dh_f    = ip_dh_f[ip]
       f       = dh_f[dh]
       vals.append( f'{f}' ) 

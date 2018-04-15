@@ -99,9 +99,9 @@ if '--train' in sys.argv:
     window = 0
     try:
       print('load to csv files')
-      train_df = pd.read_csv(f'files/train_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f'])
-      val_df = pd.read_csv(f'files/val_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f'])
-      test_df = pd.read_csv(f'files/test_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f'])
+      train_df = pd.read_csv(f'files/train_df_dhf_hm_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm'])
+      val_df = pd.read_csv(f'files/val_df_dhf_hm_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm'])
+      test_df = pd.read_csv(f'files/test_df_dhf_hm_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm'])
     except Exception as ex:
       print(ex)
       continue
@@ -110,7 +110,7 @@ if '--train' in sys.argv:
     print("test size : ", len(test_df))
     
     target      = 'is_attributed'
-    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f']
+    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f', 'hm']
     categorical = ['app', 'device', 'os', 'channel', 'hour']
 
     print("Training...")
@@ -118,11 +118,11 @@ if '--train' in sys.argv:
       'seed':             random.choice( [999+i for i in range(10)] ),
       'boosting_type':    'gbdt',
       'objective':        'binary',
-      'metric':           ['auc'],
-      'learning_rate':    random.choice([0.085, 0.100]),
+      'metric':           ['auc', 'log_loss'],
+      'learning_rate':    random.choice([0.095, 0.100]),
       'scale_pos_weight': 99, # because training data is extremely unbalanced 
-      'num_leaves':       7,  # we should let it be smaller than 2^(max_depth)
-      'max_depth':        random.choice([3,4]),  # -1 means no limit
+      'num_leaves':       random.choice([7,8,9,10]),  # we should let it be smaller than 2^(max_depth)
+      'max_depth':        random.choice([3,4,5]),  # -1 means no limit
       'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
       'max_bin':          100,  # Number of bucketed bin for feature values
       'subsample':        0.7,  # Subsample ratio of the training instance.
@@ -156,12 +156,20 @@ if '--train' in sys.argv:
                      valid_sets            = [xgtrain, xgvalid], 
                      valid_names           = ['train','valid'], 
                      evals_result          = evals_results, 
-                     num_boost_round       = 750,
-                     early_stopping_rounds = 750,
+                     num_boost_round       = 800,
+                     early_stopping_rounds = 950,
                      verbose_eval          = 10, 
                      feval                 = None)
 
     n_estimators = bst1.best_iteration
+
+    feature_importances = bst1.feature_importance().tolist()
+    feature_names = bst1.feature_name()
+
+    importances = sorted(dict(zip(feature_names, feature_importances)).items(), key=lambda x:x[1]*-1)
+    for feat, importance in importances:
+      print(feat, importance)
+
     print("Model Report")
     print("n_estimators : ", n_estimators)
     auc = evals_results['valid']['auc'][n_estimators-1]
@@ -177,5 +185,6 @@ if '--train' in sys.argv:
     print("writing...")
     sub.to_csv(f'submission_auc={auc:0.012f}_windows={window:012d}_est={n_estimators}_{hash}.csv',index=False)
     open(f'files/params/{hash}', 'w').write( obj )
+    open(f'files/importances/{hash}', 'w').write( json.dumps(importances, indent=2) )
 
     print("done...")

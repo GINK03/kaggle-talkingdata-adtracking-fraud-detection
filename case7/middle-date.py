@@ -27,7 +27,7 @@ if '--pickle' in sys.argv:
       strtime = obj['click_time']
       ip      = obj['ip']
       dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
-      hm = (dt.day*24*60 + dt.hour * 60 + dt.minute)//10
+      hm = (dt.hour * 60 + dt.minute)//10
       hms.add( int(hm) ) 
 
   hm_index = {}
@@ -61,7 +61,7 @@ if '--convert' in sys.argv:
       strtime = obj['click_time']
       ip      = obj['ip']
       dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
-      hm = (dt.day*24*60 + dt.hour * 60 + dt.minute)//10
+      hm = (dt.hour * 60 + dt.minute)//10
       index = hm_index[ hm ]
       vals.append( f'{index}' ) 
       text = ','.join(vals)
