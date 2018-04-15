@@ -99,9 +99,9 @@ if '--train' in sys.argv:
     window = 0
     try:
       print('load to csv files')
-      train_df = pd.read_csv(f'files/train_df_dhf_hm_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm'])
-      val_df = pd.read_csv(f'files/val_df_dhf_hm_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm'])
-      test_df = pd.read_csv(f'files/test_df_dhf_hm_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm'])
+      train_df = pd.read_csv(f'files/train_df_dhf_hm_ci_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm', 'ci' ])
+      val_df = pd.read_csv(f'files/val_df_dhf_hm_ci_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm', 'ci'])
+      test_df = pd.read_csv(f'files/test_df_dhf_hm_ci_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm', 'ci'])
     except Exception as ex:
       print(ex)
       continue
@@ -110,7 +110,7 @@ if '--train' in sys.argv:
     print("test size : ", len(test_df))
     
     target      = 'is_attributed'
-    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f', 'hm']
+    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f', 'hm', 'ci']
     categorical = ['app', 'device', 'os', 'channel', 'hour']
 
     print("Training...")
@@ -139,7 +139,7 @@ if '--train' in sys.argv:
     hash = hashlib.sha256(bytes(obj, 'utf8')).hexdigest()
     
     # ADHOC:train_df -> train_df + eval_df
-    train_df.append( val_df )
+    #train_df.append( val_df )
 
     xgtrain = lgb.Dataset(train_df[predictors].values, label=train_df[target].values,
                           feature_name=predictors,
