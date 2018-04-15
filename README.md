@@ -36,3 +36,8 @@
 -　　middle-date.py
 - まず、リニアでチェック　
 - feature_importanceを利用するようになった -> channel\*ip freqを入れたいモチベになった
+```console
+01: middle-ip-dt.py
+02: middle-date.py
+03: middle-channle_ip-dt.py 
+```
