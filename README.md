@@ -32,4 +32,6 @@
 - ipのウィンドウ周波数関数を実装して, jsonで吐き出し(middle) -> pandasで突合する
 - pub scoreが0.9695で変わらず -> 残念
 -　日付指示ベクトルを追加予定
+- middle-ip-dt.py -> あまり改善せず
+-　　middle-date.py
 - まず、リニアでチェック　
