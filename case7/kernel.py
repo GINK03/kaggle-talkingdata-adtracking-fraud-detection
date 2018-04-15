@@ -1,10 +1,10 @@
-import pandas as pd
+
 import time
 import numpy as np
 from   sklearn.cross_validation import train_test_split
 import lightgbm as lgb
 import gc
-
+import pandas as pd
 import pickle
 import gzip
 import os
@@ -99,9 +99,9 @@ if '--train' in sys.argv:
     window = 0
     try:
       print('load to csv files')
-      train_df = pd.read_csv(f'files/train_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count'])
-      val_df = pd.read_csv(f'files/val_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count'])
-      test_df = pd.read_csv(f'files/test_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count'])
+      train_df = pd.read_csv(f'files/train_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f'])
+      val_df = pd.read_csv(f'files/val_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f'])
+      test_df = pd.read_csv(f'files/test_df_dhf_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f'])
     except Exception as ex:
       print(ex)
       continue
@@ -110,7 +110,7 @@ if '--train' in sys.argv:
     print("test size : ", len(test_df))
     
     target      = 'is_attributed'
-    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count']
+    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f']
     categorical = ['app', 'device', 'os', 'channel', 'hour']
 
     print("Training...")
@@ -137,6 +137,9 @@ if '--train' in sys.argv:
     }
     obj = json.dumps( params, indent=2 )
     hash = hashlib.sha256(bytes(obj, 'utf8')).hexdigest()
+    
+    # ADHOC:train_df -> train_df + eval_df
+    train_df.append( val_df )
 
     xgtrain = lgb.Dataset(train_df[predictors].values, label=train_df[target].values,
                           feature_name=predictors,
@@ -153,8 +156,8 @@ if '--train' in sys.argv:
                      valid_sets            = [xgtrain, xgvalid], 
                      valid_names           = ['train','valid'], 
                      evals_result          = evals_results, 
-                     num_boost_round       = 2000,
-                     early_stopping_rounds = 50,
+                     num_boost_round       = 750,
+                     early_stopping_rounds = 750,
                      verbose_eval          = 10, 
                      feval                 = None)
 
@@ -172,7 +175,7 @@ if '--train' in sys.argv:
     sub['click_id']      = test_df['click_id'].astype('int')
     sub['is_attributed'] = bst1.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(f'submission_{auc:0.012f}_{window:012d}_{hash}.csv',index=False)
+    sub.to_csv(f'submission_auc={auc:0.012f}_windows={window:012d}_est={n_estimators}_{hash}.csv',index=False)
     open(f'files/params/{hash}', 'w').write( obj )
 
     print("done...")
