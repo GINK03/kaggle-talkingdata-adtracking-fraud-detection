@@ -35,3 +35,4 @@
 - middle-ip-dt.py -> あまり改善せず
 -　　middle-date.py
 - まず、リニアでチェック　
+- feature_importanceを利用するようになった -> channel\*ip freqを入れたいモチベになった
