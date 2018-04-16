@@ -46,77 +46,78 @@ if '--prepare' in sys.argv:
     # # of clicks for each ip-day-hour combination
     print('make:qty, group by...["ip", "day", "hour", "channel"] ')
     gp = train_df[['ip', 'day', 'hour', 'channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
-    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
+    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left'); del gp
 
     print('make:ip_channle, group by...["ip", "channel"] ')
     gp = train_df[['ip','channel']].groupby(by=['ip'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_channel'})
-    train_df = train_df.merge(gp, on=['ip'], how='left')
+    train_df = train_df.merge(gp, on=['ip'], how='left'); del gp
 
     print('make:device_channle, group by...["device", "channel"] ')
     gp = train_df[['device','channel']].groupby(by=['device'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'device_channel'})
-    train_df = train_df.merge(gp, on=['device'], how='left')
+    train_df = train_df.merge(gp, on=['device'], how='left'); del gp
     
     print('make:device_hour_channle, group by...["device", "hour" , "channel"] ')
     gp = train_df[['device', 'hour', 'channel']].groupby(by=['device', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'device_hour_channel'})
-    train_df = train_df.merge(gp, on=['device', 'hour'], how='left')
+    train_df = train_df.merge(gp, on=['device', 'hour'], how='left'); del gp
 
     print('make:os_channle, group by...["os", "channel"] ')
     gp = train_df[['os','channel']].groupby(by=['os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'os_channel'})
-    train_df = train_df.merge(gp, on=['os'], how='left')
+    train_df = train_df.merge(gp, on=['os'], how='left'); del gp
 
     print('make:ip_app_chl_mean_hour, group by...["ip", "app", "channel"]')
     gp = train_df[['ip','app', 'channel','hour']].groupby(by=['ip', 'app', 'channel'])[['hour']].mean().reset_index().rename(index=str, columns={'hour': 'ip_app_channel_mean_hour'})
-    train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
+    train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left'); del gp
 
     print('make:ip_app_uniq, group by...["ip", "app", "channel"]')
     gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_app_uniq'})
-    train_df = train_df.merge(gp, on=['ip','app'], how='left')
+    train_df = train_df.merge(gp, on=['ip','app'], how='left'); del gp
 
     print('make:ip-day-hour, group by...["ip", "day", "hour"] ')
     gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_tcount'})
-    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
+    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left'); del gp
 
     print('make:ip_day_chl_var_hour, group by...["ip", "day", "channel"]')
     gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','channel'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_hour_var'})
-    train_df = train_df.merge(gp, on=['ip','day','channel'], how='left')
+    train_df = train_df.merge(gp, on=['ip','day','channel'], how='left'); del gp
 
     # --- 
     print('make:ip_app_os_var_hour, group by...["ip", "app", "os"]')
     gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
-    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left') 
+    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left'); del gp
 
     # --- 
     print('make:ip_app_channel_var_day, group by...["ip", "app", "channel"]')
     gp = train_df[['ip','app', 'channel', 'day']].groupby(by=['ip', 'app', 'channel'])[['day']].var().reset_index().rename(index=str, columns={'day': 'ip_app_channel_var_day'})
-    train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
+    train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left'); del gp
 
     # # of clicks for each ip-app combination
     print('make:ip_app_channel, group by...["ip", "app", "channel"]')
     gp = train_df[['ip', 'app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
-    train_df = train_df.merge(gp, on=['ip','app'], how='left')
+    train_df = train_df.merge(gp, on=['ip','app'], how='left'); del gp
 
     print('make:ip_os_hour_count, group by...["ip", "hour", "os"]')
     gp = train_df[['ip', 'hour', 'os', 'channel']].groupby(by=['ip', 'hour', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_hour_count'})
-    train_df = train_df.merge(gp, on=['ip', 'hour', 'os'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'hour', 'os'], how='left'); del gp
     
     print('make:ip_app_os_count, group by...["ip", "app", "os", "channel"]')
     gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
-    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
+    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left'); del gp
     
     print('make:ip_os_app_hour_count, group by...["ip", "os", "app", "hour"]')
     gp = train_df[['ip', 'os', 'app', 'hour', 'channel']].groupby(by=['ip', 'os', 'app', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_app_hour_count'})
-    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'hour'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'hour'], how='left'); del gp
 
     print('make:ip_device_uniq, group by...["ip", "device"]')
     gp = train_df[['ip', 'os', 'app', 'device', 'channel']].groupby(by=['ip', 'device'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_device_uniq'})
-    train_df = train_df.merge(gp, on=['ip', 'device' ], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'device' ], how='left'); del gp
+
     print('make:ip_app_uniq, group by...["ip", "os", "app"]')
     gp = train_df[['ip', 'os', 'app', 'device', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_device_uniq'})
-    train_df = train_df.merge(gp, on=['ip', 'app', 'os'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'app', 'os'], how='left'); del gp
 
     print('make:ip_os_app_device_uniq, group by...["ip", "os", "app", "device"]')
     gp = train_df[['ip', 'os', 'app', 'device', 'channel']].groupby(by=['ip', 'os', 'app', 'device'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_os_app_device_uniq'})
-    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'device'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'device'], how='left'); del gp
 
     print("vars and data type: ")
     train_df['qty']             = train_df['qty'].astype('uint16')
@@ -135,21 +136,25 @@ if '--prepare' in sys.argv:
     #train_df.to_pickle( f'files/train_df_{window:012d}.pkl.gz',  'gzip')
     #val_df.to_pickle(   f'files/val_df_{window:012d}.pkl.gz',    'gzip')
     #test_df.to_pickle(  f'files/test_df_{window:012d}.pkl.gz',   'gzip')
-    train_df.to_csv( f'files/train_df_{window:012d}.csv')
-    val_df.to_csv(   f'files/val_df_{window:012d}.csv')
-    test_df.to_csv(  f'files/test_df_{window:012d}.csv')
+    train_df.to_csv( f'files/train_df_{window:012d}.csv.gz', compression='gzip')
+    val_df.to_csv(   f'files/val_df_{window:012d}.csv.gz', compression='gzip')
+    test_df.to_csv(  f'files/test_df_{window:012d}.csv.gz', compression='gzip')
 
 if '--train' in sys.argv:
   trials = [ i for i in range(100) ]
   random.shuffle(trials)
   for trial in trials:
-    window = 0
+    window = 500_0000
+    base = ['ip','app','device','os','channel','is_attributed','hour','day']
+    extend = 'qty,ip_channel,device_channel,device_hour_channel,os_channel,ip_app_channel_mean_hour,ip_app_uniq,ip_tcount,ip_hour_var,ip_app_os_var,ip_app_channel_var_day,ip_app_count,ip_os_hour_count,ip_app_os_count,ip_os_app_hour_count,ip_device_uniq_x,ip_device_uniq_y,ip_os_app_device_uniq'.split(',')
+
+    base.extend( extend )
     try:
       print('load to csv files')
       _mid = ''
-      train_df = pd.read_csv(f'files/train_df{_mid}_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day' ])
-      val_df = pd.read_csv(f'files/val_df{_mid}_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day' ])
-      test_df = pd.read_csv(f'files/test_df{_mid}_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day'])
+      train_df = pd.read_csv(f'files/train_df{_mid}_{window:012d}.csv.gz', dtype=dtypes, usecols=base, compression='gzip')
+      val_df = pd.read_csv(f'files/val_df{_mid}_{window:012d}.csv.gz', dtype=dtypes, usecols=base, compression='gzip')
+      test_df = pd.read_csv(f'files/test_df{_mid}_{window:012d}.csv.gz', dtype=dtypes, usecols=['click_id'] + list(filter(lambda x:x != 'is_attributed', base)), compression='gzip')
     except Exception as ex:
       print(ex)
       continue
@@ -158,7 +163,7 @@ if '--train' in sys.argv:
     print("test size : ", len(test_df))
     
     target      = 'is_attributed'
-    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day']
+    predictors  = list(filter(lambda x:x != 'is_attributed', base))
     #predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f', 'hm', 'ci']
     categorical = ['app', 'device', 'os', 'channel', 'hour']
 
@@ -234,5 +239,5 @@ if '--train' in sys.argv:
     sub.to_csv(f'submission_auc={auc:0.012f}_windows={window:012d}_est={n_estimators}_{hash}.csv',index=False)
     open(f'files/params/{hash}', 'w').write( obj )
     open(f'files/importances/{hash}', 'w').write( json.dumps(importances, indent=2) )
-
+  
     print("done...")
