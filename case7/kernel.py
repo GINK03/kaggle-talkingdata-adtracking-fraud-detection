@@ -30,11 +30,11 @@ dtypes = {
         }
 if '--prepare' in sys.argv:
     #for window in [ i*500_000 for i in range(100) ]:
-    window =  500_0000
+    window = 500_0000
     print('load train...')
     #train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,144903891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
-    train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,13903891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
-    print('load test...')
+    train_df = pd.read_csv("inputs/train.csv", skiprows=range(0,14003891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip', 'app','device','os', 'channel', 'click_time', 'is_attributed'])
+    print(' load test...')
     test_df = pd.read_csv("inputs/test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
     len_train = len(train_df)
@@ -71,31 +71,31 @@ if '--prepare' in sys.argv:
     print('merge...')
     train_df = train_df.merge(gp, on=['os'], how='left')
 
-    print('grouping by : ip_app_chl_mean_hour')
+    print('make:ip_app_chl_mean_hour, group by...["ip", "app", "channel"]')
     gp = train_df[['ip','app', 'channel','hour']].groupby(by=['ip', 'app', 'channel'])[['hour']].mean().reset_index().rename(index=str, columns={'hour': 'ip_app_channel_mean_hour'})
     print("merging...")
     train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
 
-    print('grouping by ip-day-hour combination...')
+    print('make:ip-day-hour, group by...["ip", "day", "hour"] ')
     gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_tcount'})
     train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
 
-    print('grouping by : ip_day_chl_var_hour')
+    print('make:ip_day_chl_var_hour, group by...["ip", "day", "channel"]')
     gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','channel'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_hour_var'})
     train_df = train_df.merge(gp, on=['ip','day','channel'], how='left')
 
     # --- 
-    print('grouping by : ip_app_os_var_hour')
+    print('make:ip_app_os_var_hour, group by...["ip", "app", "os"]')
     gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
     train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left') 
 
     # --- 
-    print('grouping by : ip_app_channel_var_day')
+    print('make:ip_app_channel_var_day, group by...["ip", "app", "channel"]')
     gp = train_df[['ip','app', 'channel', 'day']].groupby(by=['ip', 'app', 'channel'])[['day']].var().reset_index().rename(index=str, columns={'day': 'ip_app_channel_var_day'})
     train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
 
     # # of clicks for each ip-app combination
-    print('group by...')
+    print('make:ip_app_channel, group by...["ip", "app", "channel"]')
     gp = train_df[['ip', 'app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
     train_df = train_df.merge(gp, on=['ip','app'], how='left')
 
