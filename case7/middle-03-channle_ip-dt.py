@@ -1,5 +1,5 @@
 
-window = 0
+window = 1000_0000
 
 fp_train = f'./files/train_df_dhf_hm_{window:012d}.csv'
 fp_val   = f'./files/val_df_dhf_hm_{window:012d}.csv'
@@ -28,11 +28,7 @@ if '--pickle' in sys.argv:
       ip      = obj['ip']
       app     = obj['app']
       channelip = f'{channel}_{ip}_{app}'
-      try:
-        dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
-      except Exception as ex:
-        print(ex, name)
-        continue
+      dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
       dh = (dt.hour*60 + dt.minute)//10
       if channelip_dh_f.get(channelip) is None:
         channelip_dh_f[channelip] = {}

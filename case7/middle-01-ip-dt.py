@@ -1,5 +1,5 @@
 
-window = 0
+window = 1000_0000
 
 fp_train = f'./files/train_df_{window:012d}.csv'
 fp_val   = f'./files/val_df_{window:012d}.csv'
@@ -24,8 +24,13 @@ if '--pickle' in sys.argv:
     for vals in it:
       obj = dict(zip(head,vals)) 
       strtime = obj['click_time']
-      ip      = f'{obj["ip"]}_{obj["channel"]}'
-      dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
+
+      try:
+        ip      = f'{obj["ip"]}_{obj["channel"]}'
+        dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
+      except Exception as ex:
+        print(ex, name)
+        continue
       dh = f'{dt.hour:02d}_{dt.minute//10:01d}'
       
       if ip_dh_f.get(ip) is None:
@@ -62,7 +67,11 @@ if '--convert' in sys.argv:
       obj     = dict(zip(head,vals)) 
       strtime = obj['click_time']
       ip      = f'{obj["ip"]}_{obj["channel"]}'
-      dt      = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
+      try:
+        dt      = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
+      except Exception as ex:
+        print(ex, name)
+        continue
       dh       = f'{dt.hour:02d}_{dt.minute//10:01d}'
       dh_f    = ip_dh_f[ip]
       f       = dh_f[dh]

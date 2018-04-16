@@ -30,9 +30,10 @@ dtypes = {
         }
 if '--prepare' in sys.argv:
     #for window in [ i*500_000 for i in range(100) ]:
-    window =  1000_0000
+    window =  500_0000
     print('load train...')
-    train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,144903891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+    #train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,144903891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+    train_df = pd.read_csv("inputs/train.csv", skiprows=range(1,13903891-window), nrows=40000000+window, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
     print('load test...')
     test_df = pd.read_csv("inputs/test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
@@ -44,10 +45,54 @@ if '--prepare' in sys.argv:
     train_df['day']  = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 
     # # of clicks for each ip-day-hour combination
-    print('group by...')
+    print('group by...["ip", "day", "hour", "channel"] ')
     gp = train_df[['ip', 'day', 'hour', 'channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
     print('merge...')
     train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
+    del gp
+
+    print('group by...["ip", "channel"] ')
+    gp = train_df[['ip','channel']].groupby(by=['ip'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_channel'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['ip'], how='left')
+
+    print('make:device_channle, group by...["ip", "channel"] ')
+    gp = train_df[['device','channel']].groupby(by=['device'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'device_channel'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['device'], how='left')
+    
+    print('make:device_hour_channle, group by...["device", "hour" , "channel"] ')
+    gp = train_df[['device', 'hour', 'channel']].groupby(by=['device', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'device_hour_channel'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['device', 'hour'], how='left')
+
+    print('make:os_channle, group by...["os", "channel"] ')
+    gp = train_df[['os','channel']].groupby(by=['os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'os_channel'})
+    print('merge...')
+    train_df = train_df.merge(gp, on=['os'], how='left')
+
+    print('grouping by : ip_app_chl_mean_hour')
+    gp = train_df[['ip','app', 'channel','hour']].groupby(by=['ip', 'app', 'channel'])[['hour']].mean().reset_index().rename(index=str, columns={'hour': 'ip_app_channel_mean_hour'})
+    print("merging...")
+    train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
+
+    print('grouping by ip-day-hour combination...')
+    gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_tcount'})
+    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
+
+    print('grouping by : ip_day_chl_var_hour')
+    gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','channel'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_hour_var'})
+    train_df = train_df.merge(gp, on=['ip','day','channel'], how='left')
+
+    # --- 
+    print('grouping by : ip_app_os_var_hour')
+    gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
+    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left') 
+
+    # --- 
+    print('grouping by : ip_app_channel_var_day')
+    gp = train_df[['ip','app', 'channel', 'day']].groupby(by=['ip', 'app', 'channel'])[['day']].var().reset_index().rename(index=str, columns={'day': 'ip_app_channel_var_day'})
+    train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
 
     # # of clicks for each ip-app combination
     print('group by...')
@@ -78,13 +123,12 @@ if '--prepare' in sys.argv:
 
     # ここを編集した
     test_df  = train_df[len_train:]
-    val_df   = train_df[(len_train-3000000):len_train]
-    train_df = train_df[:(len_train-3000000)]
+    val_df   = train_df[(len_train-2500000):len_train]
+    train_df = train_df[:(len_train-2500000)]
 
     print('train size: ', len(train_df))
     print('valid size: ', len(val_df))
     print('test size : ', len(test_df))
-
 
     #train_df.to_pickle( f'files/train_df_{window:012d}.pkl.gz',  'gzip')
     #val_df.to_pickle(   f'files/val_df_{window:012d}.pkl.gz',    'gzip')
@@ -92,6 +136,7 @@ if '--prepare' in sys.argv:
     train_df.to_csv( f'files/train_df_{window:012d}.csv')
     val_df.to_csv(   f'files/val_df_{window:012d}.csv')
     test_df.to_csv(  f'files/test_df_{window:012d}.csv')
+
 if '--train' in sys.argv:
   trials = [ i for i in range(100) ]
   random.shuffle(trials)
@@ -99,9 +144,10 @@ if '--train' in sys.argv:
     window = 0
     try:
       print('load to csv files')
-      train_df = pd.read_csv(f'files/train_df_dhf_hm_ci_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm', 'ci' ])
-      val_df = pd.read_csv(f'files/val_df_dhf_hm_ci_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm', 'ci'])
-      test_df = pd.read_csv(f'files/test_df_dhf_hm_ci_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'dh_f', 'hm', 'ci'])
+      _mid = ''
+      train_df = pd.read_csv(f'files/train_df{_mid}_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day' ])
+      val_df = pd.read_csv(f'files/val_df{_mid}_{window:012d}.csv', dtype=dtypes, usecols=['ip','app','device','os','channel','click_time','is_attributed','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day' ])
+      test_df = pd.read_csv(f'files/test_df{_mid}_{window:012d}.csv', dtype=dtypes, usecols=['click_id', 'ip','app','device','os','channel','click_time','hour','day','qty','ip_app_count','ip_app_os_count','ip_os_hour_count','ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day'])
     except Exception as ex:
       print(ex)
       continue
@@ -110,24 +156,24 @@ if '--train' in sys.argv:
     print("test size : ", len(test_df))
     
     target      = 'is_attributed'
-    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f', 'hm', 'ci']
+    predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'ip_channel', 'ip_app_channel_mean_hour', 'ip_tcount', 'ip_hour_var', 'ip_app_os_var', 'ip_app_channel_var_day']
+    #predictors  = ['app', 'device', 'os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', 'ip_os_hour_count', 'ip_os_app_hour_count', 'dh_f', 'hm', 'ci']
     categorical = ['app', 'device', 'os', 'channel', 'hour']
 
     print("Training...")
     params = {
-      'seed':             random.choice( [999+i for i in range(10)] ),
       'boosting_type':    'gbdt',
       'objective':        'binary',
-      'metric':           ['auc', 'log_loss'],
-      'learning_rate':    random.choice([0.095, 0.100]),
-      'scale_pos_weight': 99, # because training data is extremely unbalanced 
-      'num_leaves':       random.choice([7,8,9,10]),  # we should let it be smaller than 2^(max_depth)
-      'max_depth':        random.choice([3,4,5]),  # -1 means no limit
+      'metric':           ['auc'],
+      'learning_rate':    random.choice([0.100]),
+      'colsample_bytree': 0.9,  # Subsample ratio of columns when constructing each
+      'scale_pos_weight': 200, # because training data is extremely unbalanced 
+      'num_leaves':       random.choice([7]),  # we should let it be smaller than 2^(max_depth)
+      'max_depth':        random.choice([3]),  # -1 means no limit
       'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
       'max_bin':          100,  # Number of bucketed bin for feature values
       'subsample':        0.7,  # Subsample ratio of the training instance.
       'subsample_freq':   1,  # frequence of subsample, <=0 means no enable
-      'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
       'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
       'subsample_for_bin': 200000,  # Number of samples for constructing bin
       'min_split_gain':   0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
@@ -156,8 +202,8 @@ if '--train' in sys.argv:
                      valid_sets            = [xgtrain, xgvalid], 
                      valid_names           = ['train','valid'], 
                      evals_result          = evals_results, 
-                     num_boost_round       = 800,
-                     early_stopping_rounds = 950,
+                     num_boost_round       = 1000,
+                     early_stopping_rounds = 50,
                      verbose_eval          = 10, 
                      feval                 = None)
 

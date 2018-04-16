@@ -1,8 +1,8 @@
 import os
 import sys
-fp_result = open('./submission_0.985746069639_000000000000_418250405c9c198adb3d2ebac6af50317a97cff0e867edec5ad0022ad3ff34b1.csv')
+fp_result = open('./submission_auc=0.986345537189_windows=000000000000_est=800_6d610de7a06537c85cfaf47c853927a933e62fda6f9fc5109a16a71d3e5f6b9d.csv')
 
-fp_prepare = open('./files/test_df_000000000000.csv')
+fp_prepare = open('./files/test_df_000010000000.csv')
 fp_sample = open('../../../.kaggle/competitions/talkingdata-adtracking-fraud-detection/sample_submission.csv')
 
 

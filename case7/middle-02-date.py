@@ -1,5 +1,5 @@
 
-window = 0
+window = 1000_0000
 
 fp_train = f'./files/train_df_dhf_{window:012d}.csv'
 fp_val   = f'./files/val_df_dhf_{window:012d}.csv'
@@ -24,8 +24,13 @@ if '--pickle' in sys.argv:
 
     for vals in it:
       obj = dict(zip(head,vals)) 
+      #print(obj)
       strtime = obj['click_time']
-      ip      = obj['ip']
+      try:
+        ip      = obj['ip']
+      except Exception as ex:
+        print(ex)
+        continue
       dt = datetime.strptime(strtime, '%Y-%m-%d %H:%M:%S')
       hm = (dt.hour * 60 + dt.minute)//10
       hms.add( int(hm) ) 
