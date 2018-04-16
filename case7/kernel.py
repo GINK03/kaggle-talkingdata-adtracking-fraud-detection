@@ -69,7 +69,7 @@ if '--prepare' in sys.argv:
     train_df = train_df.merge(gp, on=['ip','app', 'channel'], how='left')
 
     print('make:ip_app_uniq, group by...["ip", "app", "channel"]')
-    gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app', 'channel'])[['channel']].nunique().reset_index().rename(index=str, columns={'hour': 'ip_app_uniq'})
+    gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_app_uniq'})
     train_df = train_df.merge(gp, on=['ip','app'], how='left')
 
     print('make:ip-day-hour, group by...["ip", "day", "hour"] ')
