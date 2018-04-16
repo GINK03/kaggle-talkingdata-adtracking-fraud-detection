@@ -72,10 +72,6 @@ if '--prepare' in sys.argv:
     gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app', 'channel'])[['channel']].nunique().reset_index().rename(index=str, columns={'hour': 'ip_app_uniq'})
     train_df = train_df.merge(gp, on=['ip','app'], how='left')
 
-    print('make:ip_app_uniq, group by...["ip", "app", "channel"]')
-    gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app'])[['channel']].nunique().reset_index().rename(index=str, columns={'hour': 'ip_app_channel_mean_hour'})
-    train_df = train_df.merge(gp, on=['ip','app','channel'], how='left')
-
     print('make:ip-day-hour, group by...["ip", "day", "hour"] ')
     gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_tcount'})
     train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
@@ -111,9 +107,16 @@ if '--prepare' in sys.argv:
     gp = train_df[['ip', 'os', 'app', 'hour', 'channel']].groupby(by=['ip', 'os', 'app', 'hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_os_app_hour_count'})
     train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'hour'], how='left')
 
+    print('make:ip_device_uniq, group by...["ip", "device"]')
+    gp = train_df[['ip', 'os', 'app', 'device', 'channel']].groupby(by=['ip', 'device'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_device_uniq'})
+    train_df = train_df.merge(gp, on=['ip', 'device' ], how='left')
+    print('make:ip_app_uniq, group by...["ip", "os", "app"]')
+    gp = train_df[['ip', 'os', 'app', 'device', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_device_uniq'})
+    train_df = train_df.merge(gp, on=['ip', 'app', 'os'], how='left')
+
     print('make:ip_os_app_device_uniq, group by...["ip", "os", "app", "device"]')
     gp = train_df[['ip', 'os', 'app', 'device', 'channel']].groupby(by=['ip', 'os', 'app', 'device'])[['channel']].nunique().reset_index().rename(index=str, columns={'channel': 'ip_os_app_device_uniq'})
-    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'hour'], how='left')
+    train_df = train_df.merge(gp, on=['ip', 'os', 'app', 'device'], how='left')
 
     print("vars and data type: ")
     train_df['qty']             = train_df['qty'].astype('uint16')
