@@ -52,7 +52,7 @@ if '--prepare' in sys.argv:
     gp = train_df[['ip','channel']].groupby(by=['ip'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_channel'})
     train_df = train_df.merge(gp, on=['ip'], how='left')
 
-    print('make:device_channle, group by...["ip", "channel"] ')
+    print('make:device_channle, group by...["device", "channel"] ')
     gp = train_df[['device','channel']].groupby(by=['device'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'device_channel'})
     train_df = train_df.merge(gp, on=['device'], how='left')
     
@@ -107,9 +107,6 @@ if '--prepare' in sys.argv:
     train_df['qty']             = train_df['qty'].astype('uint16')
     train_df['ip_app_count']    = train_df['ip_app_count'].astype('uint16')
     train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
-
-
-    # # of clicks for each ip-day-hour combination
 
     # ここを編集した
     test_df  = train_df[len_train:]
