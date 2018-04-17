@@ -8,7 +8,6 @@ import gc
 import os
 import sys
 import json
-import pickle
 debug=False
 if debug:
     print('*** debug parameter set: this is a test run for debugging purposes ***')
@@ -242,18 +241,17 @@ def DO(frm,to,fileno):
     val_df = train_df[(len_train-val_size):len_train]
     train_df = train_df[:(len_train-val_size)]
 
+    #np.save( 'files/test_df', test_df.values ) 
+    #np.save( 'files/val_df', val_df.values)
+    #np.save( 'files/train_df', train_df.values)
+
     test_df.to_pickle('files/test_df.pkl')
     val_df.to_pickle('files/val_df.pkl')
     train_df.to_pickle('files/train_df.pkl')
-    
-    np.save( 'files/test_df', test_df.values ) 
-    np.save( 'files/val_df', val_df.values)
-    np.save( 'files/train_df', train_df.values)
+
     
     headers = [train_df.columns.values.tolist(), test_df.columns.values.tolist()] 
-    dtypes = [ train_df.dtypes, val_df.dtypes, test_df.dtypes ]
     json.dump( headers, fp=open('files/headers.json', 'w'), indent=2 ) 
-    pickle.dump( dtypes, open('files/dtypes.pkl', 'wb') )
 
 def Fun():
     dtypes = {
@@ -265,21 +263,11 @@ def Fun():
             'is_attributed' : 'uint8',
             'click_id'      : 'uint32',
             }
-    train_dtype, val_dtype, test_dtype = [ x for x in pickle.load(open('files/dtypes.pkl', 'rb')) ]
-
-    test_dtype = test_dtype.apply(lambda x: x.name).to_dict()
     train_columns, test_columns = json.load( fp=open('files/headers.json') ) 
-
-    if '--numpy' in sys.argv:
-      test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns, dtype=test_dtype)
-      print(test_df.dtypes)
-      val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns, dtype=val_dtype)
-      train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns, dtype=train_dtype)
-    else:
-      test_df  = pd.read_pickle('files/test_df.pkl')
-      val_df   = pd.read_pickle('files/val_df.pkl')
-      train_df = pd.read_pickle('files/train_df.pkl')
-
+    test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns).infer_objects()
+    print(test_df.dtypes)
+    val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns).infer_objects()
+    train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
@@ -290,30 +278,25 @@ def Fun():
 
     predictors = [ p for p in train_columns if p not in ignores ]
     categorical = ['app', 'device', 'os', 'channel', 'hour', 'day']
-        
     print('predictors',predictors)
-
 
     sub = pd.DataFrame()
     sub['click_id'] = test_df['click_id'].astype('int')
-
     gc.collect()
-
     print("Training...")
     start_time = time.time()
-
     params = {
-        'learning_rate': 0.20,
-        #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-        'num_leaves': 7,  # 2^max_depth - 1
-        'max_depth': 3,  # -1 means no limit
-        'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
-        'max_bin': 100,  # Number of bucketed bin for feature values
-        'subsample': 0.7,  # Subsample ratio of the training instance.
-        'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
-        'colsample_bytree': 0.9,  # Subsample ratio of columns when constructing each tree.
-        'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-        'scale_pos_weight':200 # because training data is extremely unbalanced 
+      'learning_rate': 0.20,
+      #'is_unbalance': 'true', # replaced with scale_pos_weight argument
+      'num_leaves': 7,  # 2^max_depth - 1
+      'max_depth': 3,  # -1 means no limit
+      'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
+      'max_bin': 100,  # Number of bucketed bin for feature values
+      'subsample': 0.7,  # Subsample ratio of the training instance.
+      'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
+      'colsample_bytree': 0.9,  # Subsample ratio of columns when constructing each tree.
+      'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
+      'scale_pos_weight': 200 # because training data is extremely unbalanced 
     }
     (bst,best_iteration) = lgb_modelfit_nocv(params, 
                             train_df, 
@@ -350,13 +333,13 @@ nchunk=40000000 + 1000_0000*3
 val_size=2500000
 
 frm=nrows-75000000 - 1000_0000*3
-
 if debug:
     frm=0
     nchunk=100000
     val_size=10000
 
 to=frm+nchunk
+
 
 naddfeat=9
 
