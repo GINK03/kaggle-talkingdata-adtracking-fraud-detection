@@ -78,16 +78,15 @@ def DO(frm,to,fileno):
             'click_id'      : 'uint32',
             }
 
-    print('loading train data...',frm,to)
+    print('loading train data...',frm,to, 'to-frm', to-frm)
     train_df = pd.read_csv("../input/train.csv", parse_dates=['click_time'], skiprows=range(1,frm), nrows=to-frm, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
     print( train_df.columns.values)
     print('loading test data...')
-    if debug:
-        test_df = pd.read_csv("../input/test.csv", nrows=100000, parse_dates=['click_time'], dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
-    else:
-        test_df = pd.read_csv("../input/test.csv", parse_dates=['click_time'], dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
+
+    test_df = pd.read_csv("../input/test.csv", parse_dates=['click_time'], dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
     len_train = len(train_df)
+    print(f'Size of train = {len_train}')
     train_df=train_df.append(test_df)
 
     del test_df
@@ -240,7 +239,7 @@ def DO(frm,to,fileno):
     test_df = train_df[len_train:]
     val_df = train_df[(len_train-val_size):len_train]
     train_df = train_df[:(len_train-val_size)]
-
+  
     #np.save( 'files/test_df', test_df.values ) 
     #np.save( 'files/val_df', val_df.values)
     #np.save( 'files/train_df', train_df.values)
@@ -249,7 +248,6 @@ def DO(frm,to,fileno):
     val_df.to_pickle('files/val_df.pkl')
     train_df.to_pickle('files/train_df.pkl')
 
-    
     headers = [train_df.columns.values.tolist(), test_df.columns.values.tolist()] 
     json.dump( headers, fp=open('files/headers.json', 'w'), indent=2 ) 
 
@@ -264,14 +262,17 @@ def Fun():
             'click_id'      : 'uint32',
             }
     train_columns, test_columns = json.load( fp=open('files/headers.json') ) 
-    test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns).infer_objects()
-    print(test_df.dtypes)
-    val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns).infer_objects()
-    train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
+    if '--numpy' in sys.argv:
+      test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns).infer_objects()
+      val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns).infer_objects()
+      train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
+    else:
+      test_df  = pd.read_pickle('files/test_df.pkl') 
+      val_df   = pd.read_pickle('files/val_df.pkl') 
+      train_df = pd.read_pickle('files/train_df.pkl') 
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
-    
     target = 'is_attributed'
 
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed']
@@ -329,14 +330,10 @@ def Fun():
     return sub
 
 nrows=184903891-1
-nchunk=40000000 + 1000_0000*3
+nchunk=40000000 + 1000_0000
 val_size=2500000
 
-frm=nrows-75000000 - 1000_0000*3
-if debug:
-    frm=0
-    nchunk=100000
-    val_size=10000
+frm=nrows-75000000 - 1000_0000
 
 to=frm+nchunk
 
