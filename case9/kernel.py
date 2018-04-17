@@ -270,6 +270,7 @@ def Fun():
 
     test_dtype = test_dtype.apply(lambda x: x.name).to_dict()
     train_columns, test_columns = json.load( fp=open('files/headers.json') ) 
+
     if '--numpy' in sys.argv:
       test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns, dtype=test_dtype)
       val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns, dtype=val_dtype)
@@ -278,7 +279,6 @@ def Fun():
       test_df  = pd.read_pickle('files/test_df.pkl')
       val_df   = pd.read_pickle('files/val_df.pkl')
       train_df = pd.read_pickle('files/train_df.pkl')
-      
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
@@ -345,10 +345,11 @@ def Fun():
     return sub
 
 nrows=184903891-1
-nchunk=40000000 + 1000_0000
+nchunk=40000000 + 1000_0000*3
 val_size=2500000
 
-frm=nrows-75000000 - 1000_0000
+frm=nrows-75000000 - 1000_0000*3
+
 if debug:
     frm=0
     nchunk=100000
