@@ -8,6 +8,7 @@ import gc
 import os
 import sys
 import json
+import pickle
 debug=False
 if debug:
     print('*** debug parameter set: this is a test run for debugging purposes ***')
@@ -246,7 +247,9 @@ def DO(frm,to,fileno):
     np.save( 'files/train_df', train_df.values)
     
     headers = [train_df.columns.values.tolist(), test_df.columns.values.tolist()] 
+    dtypes = [ train_df.dtypes, val_df.dtypes, test_df.dtypes ]
     json.dump( headers, fp=open('files/headers.json', 'w'), indent=2 ) 
+    pickle.dump( dtypes, open('files/dtypes.pkl', 'wb') )
 
 def Fun():
     dtypes = {
@@ -258,11 +261,14 @@ def Fun():
             'is_attributed' : 'uint8',
             'click_id'      : 'uint32',
             }
+    train_dtype, val_dtype, test_dtype = [ x for x in pickle.load(open('files/dtypes.pkl', 'rb')) ]
+
+    test_dtype = test_dtype.apply(lambda x: x.name).to_dict()
     train_columns, test_columns = json.load( fp=open('files/headers.json') ) 
-    test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns).infer_objects()
+    test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns, dtype=test_dtype)
     print(test_df.dtypes)
-    val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns).infer_objects()
-    train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
+    val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns, dtype=val_dtype)
+    train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns, dtype=train_dtype)
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
@@ -323,7 +329,7 @@ def Fun():
     sub['is_attributed'] = bst.predict(test_df[predictors],num_iteration=best_iteration)
     
     print("writing...")
-    sub.to_csv(f'sub_it_{fileno}.csv.gz',index=False,compression='gzip')
+    sub.to_csv(f'sub_it.csv.gz',index=False,compression='gzip')
 
     print("done...")
     return sub
