@@ -353,17 +353,11 @@ def Fun():
     return sub
 
 nrows=184903891-1
-<<<<<<< HEAD
 nchunk=40000000 + 1000_0000*3
 val_size=2500000
 
 frm=nrows-75000000 - 1000_0000*3
-=======
-nchunk=40000000 + 1000_0000
-val_size=2500000
 
-frm=nrows-75000000 - 1000_0000
->>>>>>> a65860975cbe859ec73703647e73f5090f6d9025
 if debug:
     frm=0
     nchunk=100000
