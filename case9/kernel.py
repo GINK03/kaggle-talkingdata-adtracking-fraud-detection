@@ -245,10 +245,11 @@ def DO(frm,to,fileno):
     test_df.to_pickle('files/test_df.pkl')
     val_df.to_pickle('files/val_df.pkl')
     train_df.to_pickle('files/train_df.pkl')
-    
-    np.save( 'files/test_df', test_df.values ) 
-    np.save( 'files/val_df', val_df.values)
-    np.save( 'files/train_df', train_df.values)
+   
+    if '--numpy' in sys.argv:
+      np.save( 'files/test_df', test_df.values ) 
+      np.save( 'files/val_df', val_df.values)
+      np.save( 'files/train_df', train_df.values)
     
     headers = [train_df.columns.values.tolist(), test_df.columns.values.tolist()] 
     dtypes = [ train_df.dtypes, val_df.dtypes, test_df.dtypes ]
@@ -269,10 +270,15 @@ def Fun():
 
     test_dtype = test_dtype.apply(lambda x: x.name).to_dict()
     train_columns, test_columns = json.load( fp=open('files/headers.json') ) 
-    test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns, dtype=test_dtype)
-    print(test_df.dtypes)
-    val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns, dtype=val_dtype)
-    train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns, dtype=train_dtype)
+    if '--numpy' in sys.argv:
+      test_df = pd.DataFrame(np.load('files/test_df.npy'), columns=test_columns, dtype=test_dtype)
+      val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns, dtype=val_dtype)
+      train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns, dtype=train_dtype)
+    else:
+      test_df  = pd.read_pickle('files/test_df.pkl')
+      val_df   = pd.read_pickle('files/val_df.pkl')
+      train_df = pd.read_pickle('files/train_df.pkl')
+      
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
