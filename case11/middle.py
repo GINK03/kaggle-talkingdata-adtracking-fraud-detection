@@ -4,7 +4,7 @@ import sys
 import gc
 
 if '--encode' in sys.argv:
-  sample_df = pd.read_csv("../input/train.csv", parse_dates=['click_time'], skiprows=range(1,7000_0000), nrows=4000_0000,usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+  sample_df = pd.read_csv("../input/train.csv", parse_dates=['click_time'], skiprows=range(1,1), nrows=10000_0000,usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
   sample_df = sample_df.infer_objects()
 
   key_atrs = {}

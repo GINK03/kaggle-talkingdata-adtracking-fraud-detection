@@ -350,10 +350,10 @@ def Fun():
     return sub
 
 nrows=184903891-1
-nchunk=40000000 + 1000_0000
+nchunk=40000000 + 1000_0000*4
 val_size=2500000
 
-frm=nrows-75000000 - 1000_0000
+frm=nrows-75000000 - 1000_0000*4
 
 to=frm+nchunk
 
