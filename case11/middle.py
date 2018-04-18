@@ -27,7 +27,6 @@ if '--encode' in sys.argv:
     key_atrs2[key][0] += is_attributed
     key_atrs2[key][1] += 1
     
-    
   buff = []
   for key, atrs in key_atrs.items():
     mean = atrs[0]/atrs[1]
