@@ -64,8 +64,18 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
     print("\nModel Report")
     print("bst1.best_iteration: ", bst1.best_iteration)
     print(metrics+":", evals_results['valid'][metrics][bst1.best_iteration-1])
+    auc = evals_results['valid']['auc'][bst1.best_iteration-1]
+    
+    feature_importances = bst1.feature_importance().tolist()
+    feature_names = bst1.feature_name()
 
-    return (bst1,bst1.best_iteration)
+    importances = sorted(dict(zip(feature_names, feature_importances)).items(), key=lambda x:x[1]*-1)
+    for feat, importance in importances:
+      print('importances', feat, importance)
+    
+    open(f'files/importances_auc={auc}', 'w').write( json.dumps(importances, indent=2) )
+
+    return (bst1,bst1.best_iteration, auc)
 
 def DO(frm,to,fileno):
     dtypes = {
@@ -296,7 +306,7 @@ def Fun():
     print("Training...")
     start_time = time.time()
     params = {
-      'learning_rate': 0.20,
+      'learning_rate': 0.10,
       #'is_unbalance': 'true', # replaced with scale_pos_weight argument
       'num_leaves': 7,  # 2^max_depth - 1
       'max_depth': 3,  # -1 means no limit
@@ -308,7 +318,7 @@ def Fun():
       'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
       'scale_pos_weight': 200 # because training data is extremely unbalanced 
     }
-    (bst,best_iteration) = lgb_modelfit_nocv(params, 
+    (bst,best_iteration, auc) = lgb_modelfit_nocv(params, 
                             train_df, 
                             val_df, 
                             predictors, 
@@ -333,7 +343,7 @@ def Fun():
     sub['is_attributed'] = bst.predict(test_df[predictors],num_iteration=best_iteration)
     
     print("writing...")
-    sub.to_csv(f'sub_it.csv.gz',index=False,compression='gzip')
+    sub.to_csv(f'sub_it_{auc:012f}.csv.gz',index=False,compression='gzip')
 
     print("done...")
     return sub
