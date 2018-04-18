@@ -120,12 +120,12 @@ def DO(frm,to,fileno):
         if i==8: selcols=['ip', 'app', 'os']; QQ=4;
         if i==9: selcols=['ip', 'app', 'os']; QQ=5;
         if i==10: selcols=['ip', 'device']; QQ=4;
-        if i==11: selcols=['ip', 'device']; QQ=5;
+        if i==11: selcols=['ip', 'device']; QQ=2; # 5ng
         if i==12: selcols=['app', 'channel']; QQ=4;
         if i==13: selcols=['app', 'channel']; QQ=5;
         if i==14: selcols=['ip', 'os']; QQ=4;
-        if i==15: selcols=['ip', 'os']; QQ=5;
-        if i==16: selcols=['ip', 'device', 'os', 'app']; qq=4;
+        if i==15: selcols=['ip', 'os']; QQ=2; # 5ng
+        if i==16: selcols=['ip', 'device', 'os', 'app']; qq=2; # 4ng
         if i==17: selcols=['ip', 'device', 'os', 'app']; qq=5;
         print('selcols',selcols,'QQ',QQ)
         
@@ -294,7 +294,7 @@ def Fun():
     print("test size : ", len(test_df))
     target = 'is_attributed'
 
-    ignores = ['click_id', 'click_time', 'ip', 'is_attributed']
+    ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
 
     predictors = [ p for p in train_columns if p not in ignores ]
     predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )

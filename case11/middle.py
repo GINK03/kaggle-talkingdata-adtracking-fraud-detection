@@ -3,13 +3,16 @@ import pandas as pd
 import sys
 import gc
 
-if '--encode' in sys.argv:
-  sample_df = pd.read_csv("../input/train.csv", parse_dates=['click_time'], skiprows=range(1,1), nrows=10000_0000,usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
-  sample_df = sample_df.infer_objects()
-
+import concurrent.futures
+import pickle
+import gzip
+def _map(arg):
+  index, df = arg
+  print(index)
+  
   key_atrs = {}
   key_atrs2 = {}
-  for obj in sample_df.to_dict(orient='records'):  
+  for obj in df.to_dict(orient='records'):  
     app = obj['app']
     chl = obj['channel']
     os = obj['os']
@@ -26,34 +29,68 @@ if '--encode' in sys.argv:
     is_attributed = obj['is_attributed']
     key_atrs2[key][0] += is_attributed
     key_atrs2[key][1] += 1
-    
-  buff = []
-  for key, atrs in key_atrs.items():
-    mean = atrs[0]/atrs[1]
-    app, chl = key.split('_')
-    buff.append( {'app':int(app), 'channel':int(chl), 'app_chl_conf':mean} )
-  gp = pd.DataFrame(buff)
-  del buff
-  gp.info()
-  print( 'gp', gp.head() )
-  gp.to_pickle(f'files/appchl_df.pkl')
+ 
+  data = pickle.dumps( (key_atrs, key_atrs2) )
+  data = gzip.compress( data )
+  open(f'files/tmp/middle_chunk_{index:09d}.pkl.gz', 'wb').write( data )
 
-  buff = []
-  for key, atrs in key_atrs2.items():
-    mean = atrs[0]/atrs[1]
-    os, chl = key.split('_')
-    buff.append( {'os':int(os), 'channel':int(chl), 'os_chl_conf':mean} )
-  gp2 = pd.DataFrame(buff)
-  del buff
-  gp2.info()
-  print( 'gp2', gp2.head() )
-  gp2.to_pickle(f'files/oschl_df.pkl')
+  print('finish', index)
 
+def mapper(data):
+  with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
+    exe.map(_map, data)
 
-  train_df = sample_df.merge(gp, on=['app', 'channel'], how='left')
-  train_df = train_df.merge(gp2, on=['os', 'channel'], how='left')
-  train_df = train_df.fillna(-1.0)
-  print( 'train', train_df.head() )
+if '--encode' in sys.argv:
+  if '--init' in sys.argv:
+    sample_dfs = pd.read_csv("../input/train.csv", parse_dates=['click_time'], skiprows=range(1,1), nrows=14000_0000, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'], chunksize=100000)
+    data = []
+    for index, sample_df in enumerate(sample_dfs):
+      data.append( (index, sample_df) )
+      if len(data) >= 16:
+        mapper(data)
+        data = []
+    mapper(data)
+    sys.exit()
+  
+  from pathlib import Path
+  if '--reduce' in sys.argv:
+    key_atrs1 = {}
+    key_atrs2 = {}
+    for path in Path('./files/tmp').glob('middle_chunk_*'):
+      _key_atrs1, _key_atrs2 = pickle.loads(gzip.decompress(path.open('rb').read()))
+      for key, atrs in _key_atrs1.items():
+        if key_atrs1.get(key) is None:
+          key_atrs1[key] = [0, 0]
+        key_atrs1[key][0] += atrs[0]
+        key_atrs1[key][1] += atrs[1]
+      for key, atrs in _key_atrs2.items():
+        if key_atrs2.get(key) is None:
+          key_atrs2[key] = [0, 0]
+        key_atrs2[key][0] += atrs[0]
+        key_atrs2[key][1] += atrs[1]
+
+    buff = []
+    for key, atrs in key_atrs1.items():
+      mean = atrs[0]/atrs[1]
+      app, chl = key.split('_')
+      buff.append( {'app':int(app), 'channel':int(chl), 'app_chl_conf':mean} )
+    gp = pd.DataFrame(buff)
+    del buff
+    gp.info()
+    print( 'gp', gp.head() )
+    gp.to_pickle(f'files/appchl_df.pkl')
+
+    buff = []
+    for key, atrs in key_atrs2.items():
+      mean = atrs[0]/atrs[1]
+      os, chl = key.split('_')
+      buff.append( {'os':int(os), 'channel':int(chl), 'os_chl_conf':mean} )
+    gp2 = pd.DataFrame(buff)
+    del buff
+    gp2.info()
+    print( 'gp2', gp2.head() )
+    gp2.to_pickle(f'files/oschl_df.pkl')
+
 
 if '--merge' in sys.argv:
   for gp_file, join_key in [('./files/appchl_df.pkl', ['app', 'channel']), ('./files/oschl_df.pkl', ['os', 'channel'])]:
