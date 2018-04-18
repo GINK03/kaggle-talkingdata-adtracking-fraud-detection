@@ -61,6 +61,6 @@ if '--merge' in sys.argv:
     for name in ['train', 'val', 'test']:
       train_df = pd.read_pickle(f'./files/{name}_df.pkl') 
       train_df = train_df.merge(sample_df, on=join_key, how='left')
-      train_df.fillna(-1.0)
-      train_df.to_pickle('./file/{name}_df.pkl')
+      train_df = train_df.fillna(-1.0)
+      train_df.to_pickle(f'./files/{name}_df.pkl')
     del train_df; gc.collect()

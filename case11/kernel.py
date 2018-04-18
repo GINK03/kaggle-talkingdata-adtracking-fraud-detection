@@ -286,9 +286,9 @@ def Fun():
       val_df = pd.DataFrame(np.load('files/val_df.npy'), columns=train_columns).infer_objects()
       train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
     else:
-      test_df  = pd.read_pickle('files/test_df.pkl') 
-      val_df   = pd.read_pickle('files/val_df.pkl') 
-      train_df = pd.read_pickle('files/train_df.pkl') 
+      test_df  = pd.read_pickle('files/test_df.pkl').fillna(-1.0)
+      val_df   = pd.read_pickle('files/val_df.pkl').fillna(-1.0)
+      train_df = pd.read_pickle('files/train_df.pkl').fillna(-1.0)
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
@@ -297,6 +297,7 @@ def Fun():
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed']
 
     predictors = [ p for p in train_columns if p not in ignores ]
+    predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
     categorical = ['app', 'device', 'os', 'channel', 'hour', 'day']
     print('predictors',predictors)
 
