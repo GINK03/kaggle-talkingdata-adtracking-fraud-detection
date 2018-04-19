@@ -53,12 +53,16 @@ add label encoding...
 
 ## case12
 #### 対象実験
- x1, x7, x4, nextClick_shift, dayを除いて実験
+x1, x7, x4, nextClick_shift, dayを除いて実験
  
 #### 対照実験結果
 0.9782 -> 0.9785
+kernel -> funを編集して対応
 
 #### 実験対象
-os_chl_indexのカテゴリ変数を与えてみる
+ip_chl_indexのカテゴリ変数を与えてみる
+#### 対照実験結果
+0.9785　-> 0.9779
+改悪のため取り下げ(test_a.py)
 
 ip-chl, os-chl分散エンコーディング
