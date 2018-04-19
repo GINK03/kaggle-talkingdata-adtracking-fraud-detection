@@ -66,3 +66,8 @@ ip_chl_indexのカテゴリ変数を与えてみる
 改悪のため取り下げ(test_a.py)
 
 ip-chl, os-chl分散エンコーディング
+
+## case13 
+#### 対照実験
+epoch timeを追加
+
