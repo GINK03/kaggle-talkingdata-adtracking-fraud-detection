@@ -60,6 +60,6 @@ x1, x7, x4, nextClick_shift, dayを除いて実験
 kernel -> funを編集して対応
 
 #### 実験対象
-os_chl_indexのカテゴリ変数を与えてみる
+ip_chl_indexのカテゴリ変数を与えてみる
 
 ip-chl, os-chl分散エンコーディング
