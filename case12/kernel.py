@@ -295,11 +295,13 @@ def Fun():
     target = 'is_attributed'
 
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
-    ignores.extend( ['x1', 'x7', 'x4', 'nextClick_shift'] )
+    ignores.extend( ['x1', 'x7', 'x4', 'day', 'nextClick_shift', 'factrize'] )
+    ignores.extend( ['ip_chl_ind'] )
     predictors = [ p for p in train_columns if p not in ignores ]
+    #predictors.extend( ['ip_chl_ind'] )
     # regression test
     # predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
-    categorical = ['app', 'device', 'os', 'channel', 'hour', 'day']
+    categorical = list(filter( lambda x: x not in ignores,  ['app', 'device', 'os', 'channel', 'hour', 'ip_chl_ind'] ) )
     print('predictors',predictors)
 
     sub = pd.DataFrame()
