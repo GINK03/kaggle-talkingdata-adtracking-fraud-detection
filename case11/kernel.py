@@ -297,7 +297,8 @@ def Fun():
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
 
     predictors = [ p for p in train_columns if p not in ignores ]
-    predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
+    # regression test
+    # predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
     categorical = ['app', 'device', 'os', 'channel', 'hour', 'day']
     print('predictors',predictors)
 
@@ -307,7 +308,7 @@ def Fun():
     print("Training...")
     start_time = time.time()
     params = {
-      'learning_rate': 0.10,
+      'learning_rate': 0.20,
       #'is_unbalance': 'true', # replaced with scale_pos_weight argument
       'num_leaves': 7,  # 2^max_depth - 1
       'max_depth': 3,  # -1 means no limit
@@ -344,7 +345,7 @@ def Fun():
     sub['is_attributed'] = bst.predict(test_df[predictors],num_iteration=best_iteration)
     
     print("writing...")
-    sub.to_csv(f'sub_it_{auc:012f}.csv.gz',index=False,compression='gzip')
+    sub.to_csv(f'sub_it_{auc:012f}.csv', index=False)
 
     print("done...")
     return sub
