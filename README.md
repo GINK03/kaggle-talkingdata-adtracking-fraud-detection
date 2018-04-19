@@ -52,4 +52,6 @@ add label encoding...
  実験結果 n=1 -> 取り除いたところ0.9782と微妙に回復した
 
 ## case12
+### 対象実験
+x1, x7, x4, nextClick_shift, dayを除いて実験
 ip-chl, os-chl分散エンコーディング
