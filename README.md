@@ -72,3 +72,6 @@ ip-chl, os-chl分散エンコーディング
 epoch timeを追加
 #### 実験結果
 0.9785　-> 0.9785（変化なし）
+
+#### 対照実験
+['ip', 'device', 'os', 'app', 'channel']でchannelで数をカウント、['ip', 'device', 'os', 'app', 'channel']でchannelで平均をカウント,['ip', 'device', 'os', 'app', 'channel']でchannelで分散をカウント
