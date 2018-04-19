@@ -47,4 +47,7 @@ new baseline archived!
 
 ## case11
 add label encoding...
+ 対照実験 :-> あると0.8772と下がりまくった。原因はTEかどうかチェックを行う
 
+## case12
+ip-chl, os-chl分散エンコーディング
