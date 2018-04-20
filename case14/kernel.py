@@ -160,21 +160,24 @@ def DO(frm,to,fileno):
           print(f'grouping by {bys} {group} combination...')
           gp = train_df[filters].groupby(by=bys)[group].count().reset_index().rename(index=str, columns={group[0]: name})
           train_df = train_df.merge(gp, on=bys, how='left')
-          train_df[ name ].to_csv(f'{name}.csv')
+          print( type( train_df[ name ] ) )
+          train_df[ name ].to_csv(f'{name}.csv', index=False)
           del gp; gc.collect()
         if dealtype == 'var':
           print(f'grouping by : {name} of variance')
           gp = train_df[filters].groupby(by=bys)[group].var().reset_index().rename(index=str, columns={group[0]: name})
           train_df = train_df.merge(gp, on=bys, how='left')
+          train_df[ name ].to_csv(f'{name}.csv', index=False)
           del gp;gc.collect()
         if dealtype == 'mean':
           print(f'grouping by : {name} of mean')
           gp = train_df[filters].groupby(by=bys)[group].mean().reset_index().rename(index=str, columns={group[0]: name})
           train_df = train_df.merge(gp, on=bys, how='left')
+          train_df[ name ].to_csv(f'{name}.csv', index=False)
           del gp;gc.collect()
       
       gp = pd.read_csv(f'{name}.csv', header=None )
-      train_df[name ]= gp
+      train_df[ name ]= gp
    
     args, tojoins = [], []
     for i in range(0,naddfeat):
@@ -271,32 +274,51 @@ def DO(frm,to,fileno):
       train_df['X'+str(i)]=gp
 
     print('doing nextClick')
-    predictors=[]
-    
+   
+    # make nextClick
     new_feature = 'nextClick'
     filename='nextClick_%d_%d.csv'%(frm,to)
-
     if os.path.exists(filename):
-        print('loading from save file')
-        QQ=pd.read_csv(filename).values
+      print('loading from save file')
+      QQ=pd.read_csv(filename).values
     else:
-        D=2**26
-        train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
-            + "_" + train_df['os'].astype(str)).apply(hash) % D
-        click_buffer= np.full(D, 3000000000, dtype=np.uint32)
-
-        train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
-        next_clicks= []
-        for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
-            next_clicks.append(click_buffer[category]-t)
-            click_buffer[category]= t
-        del(click_buffer)
-        QQ= list(reversed(next_clicks))
-
-        print('saving')
-        pd.DataFrame(QQ).to_csv(filename,index=False)
+      D=2**26
+      train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
+          + "_" + train_df['os'].astype(str)).apply(hash) % D
+      click_buffer= np.full(D, 3000000000, dtype=np.uint32)
+      train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
+      next_clicks= []
+      for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
+          next_clicks.append(click_buffer[category]-t)
+          click_buffer[category]= t
+      del(click_buffer)
+      QQ= list(reversed(next_clicks))
+      print('saving')
+      pd.DataFrame(QQ).to_csv(filename,index=False)
+    train_df[new_feature] = QQ
+    
+    # make nextClick2
+    new_feature = 'nextClick2'
+    filename='nextClick2_%d_%d.csv'%(frm,to)
+    if os.path.exists(filename):
+      print('loading from save file')
+      QQ=pd.read_csv(filename).values
+    else:
+      D=2**26
+      train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['device'].astype(str) + "_" + train_df['os'].astype(str)).apply(hash) % D
+      click_buffer= np.full(D, 3000000000, dtype=np.uint32)
+      train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
+      next_clicks= []
+      for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
+          next_clicks.append(click_buffer[category]-t)
+          click_buffer[category]= t
+      del(click_buffer)
+      QQ= list(reversed(next_clicks))
+      print('saving')
+      pd.DataFrame(QQ).to_csv(filename,index=False)
 
     train_df[new_feature] = QQ
+    predictors=[]
     predictors.append(new_feature)
 
     train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
