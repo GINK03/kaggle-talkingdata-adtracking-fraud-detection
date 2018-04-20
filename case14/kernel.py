@@ -236,11 +236,8 @@ def DO(frm,to,fileno):
     for tojoin in tojoins:
       filename, QQ, i = tojoin
       if QQ==5: 
-          gp=pd.read_csv(filename,header=None)
-          train_df['X'+str(i)]=gp
-      else: 
-          gp=pd.read_csv(filename)
-          train_df['X'+str(i)]=gp
+        gp=pd.read_csv(filename,header=None)
+        train_df['X'+str(i)]=gp
 
     print('doing nextClick')
     predictors=[]
