@@ -218,13 +218,17 @@ def DO(frm,to,fileno):
                 train_df['X'+str(i)]=gp
             else: 
                 gp=pd.read_csv(filename)
-                train_df = train_df.merge(gp, on=selcols[0:len(selcols)-1], how='left')
+                train_df['X'+str(i)]=gp
+                #train_df = train_df.merge(gp, on=selcols[0:len(selcols)-1], how='left')
         else:
             arg =  (i, QQ, selcols, filename) 
             args.append( arg )
     import concurrent.futures
-    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as exe:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=12) as exe:
       exe.map( map_csv, args )
+    if len(args) != 0:
+      print('just only make csv')
+      sys.exit(0)
     print('doing nextClick')
     predictors=[]
     
