@@ -77,6 +77,9 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 
     return (bst1,bst1.best_iteration, auc)
 
+def map_csv(arg):
+  index, name = arg
+  ...
 def DO(frm,to,fileno):
     dtypes = {
             'ip'            : 'uint32',
@@ -131,7 +134,7 @@ def DO(frm,to,fileno):
 
         if i==16: selcols=['ip', 'app', 'os']; QQ=2;
         if i==17: selcols=['ip', 'app', 'os']; QQ=4;
-        if i==18: selcols=['ip', 'app', 'os']; QQ=4;
+        if i==18: selcols=['ip', 'app', 'os']; QQ=3;
         if i==19: selcols=['ip', 'app', 'os']; QQ=5;
 
         if i==20: selcols=['ip', 'device']; QQ=4;
@@ -149,21 +152,26 @@ def DO(frm,to,fileno):
         if i==30: selcols=['ip', 'os']; QQ=3; # 5ng
         if i==31: selcols=['ip', 'os']; QQ=2; # 5ng
 
-        if i==30: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
-        if i==31: selcols=['ip', 'device', 'os', 'app']; QQ=5;
-        if i==32: selcols=['ip', 'device', 'os', 'app']; QQ=3; # 4ng
-        if i==33: selcols=['ip', 'device', 'os', 'app']; QQ=4;
+        if i==32: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
+        if i==33: selcols=['ip', 'device', 'os', 'app']; QQ=5;
+        if i==34: selcols=['ip', 'device', 'os', 'app']; QQ=3; # 4ng
+        if i==35: selcols=['ip', 'device', 'os', 'app']; QQ=4;
         
-        if i==34: selcols=['ip', 'os', 'app', 'channel']; QQ=4;
-        if i==35: selcols=['ip', 'os', 'app', 'channel']; QQ=5;
-        if i==36: selcols=['ip', 'os', 'app', 'channel']; QQ=3;
-        if i==37: selcols=['ip', 'os', 'app', 'channel']; QQ=2;
-        if i==38: selcols=['ip', 'os', 'app', 'channel']; QQ=1;
+        if i==36: selcols=['ip', 'os', 'app', 'channel']; QQ=4;
+        if i==37: selcols=['ip', 'os', 'app', 'channel']; QQ=5;
+        if i==38: selcols=['ip', 'os', 'app', 'channel']; QQ=3;
+        if i==39: selcols=['ip', 'os', 'app', 'channel']; QQ=2;
+        if i==40: selcols=['ip', 'os', 'app', 'channel']; QQ=1;
 
-        if i==39: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=4;
-        if i==40: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=5;
-        if i==41: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=3;
-        if i==42: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=2;
+        if i==41: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=4;
+        if i==42: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=5;
+        if i==43: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=3;
+        if i==43: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=2;
+
+        if i==44: selcols=['device', 'os', 'app', 'ip']; QQ=2; 
+        if i==45: selcols=['device', 'os', 'app', 'ip']; QQ=5;
+        if i==46: selcols=['device', 'os', 'app', 'ip']; QQ=3; 
+        if i==47: selcols=['device', 'os', 'app', 'ip']; QQ=4;
 
         print('selcols',selcols,'QQ',QQ)
         
@@ -399,8 +407,7 @@ frm=nrows-75000000 - 1000_0000*4
 
 to=frm+nchunk
 
-
-naddfeat=41
+naddfeat=48
 
 if '--do' in sys.argv:
   sub=DO(frm,to,0)
