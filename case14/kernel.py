@@ -111,6 +111,36 @@ def map_csv(arg):
     gc.collect()    
   except Exception as ex:
     print(ex)
+  
+def map_nexts(arg):
+  global train_df
+  index, tup = arg
+  key = '_'.join( tup )
+  print( f'make nextClick {index} {key}' )
+  new_feature = f'nextClick_{index:04d}_{key}'
+  filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
+  if os.path.exists(filename):
+    print('already processed')
+    return 
+    #QQ=pd.read_csv(filename).values
+  else:
+    D=2**26
+    import functools
+
+    key = functools.reduce(lambda x,y: x + '_' + y, [train_df[x].astype(str) for x in tup ]  )
+    train_df['category'] = ( key ).apply(hash) % D
+    click_buffer= np.full(D, 3000000000, dtype=np.uint32)
+    train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
+    next_clicks= []
+    for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
+        next_clicks.append(click_buffer[category]-t)
+        click_buffer[category]= t
+    del(click_buffer)
+    QQ= list(reversed(next_clicks) )
+    print('saving')
+    pd.DataFrame(QQ).to_csv(filename,index=False)
+    #train_df[new_feature] = QQ
+    del QQ; gc.collect()
 
 train_df = None
 def DO(frm,to,fileno):
@@ -145,35 +175,6 @@ def DO(frm,to,fileno):
     
     gc.collect()
     
-    def map_nexts(arg):
-      global train_df
-      index, tup = arg
-      key = '_'.join( tup )
-      print( f'make nextClick {index} {key}' )
-      new_feature = f'nextClick_{index:04d}_{key}'
-      filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
-      if os.path.exists(filename):
-        print('already processed')
-        return 
-        #QQ=pd.read_csv(filename).values
-      else:
-        D=2**26
-        import functools
-
-        key = functools.reduce(lambda x,y: x + '_' + y, [train_df[x].astype(str) for x in tup ]  )
-        train_df['category'] = ( key ).apply(hash) % D
-        click_buffer= np.full(D, 3000000000, dtype=np.uint32)
-        train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
-        next_clicks= []
-        for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
-            next_clicks.append(click_buffer[category]-t)
-            click_buffer[category]= t
-        del(click_buffer)
-        QQ= list(reversed(next_clicks) )
-        print('saving')
-        pd.DataFrame(QQ).to_csv(filename,index=False)
-        #train_df[new_feature] = QQ
-        del QQ; gc.collect()
     args = [ (index, tup) for index, tup in enumerate([ ['ip', 'app', 'device', 'os'], \
                                 ['ip', 'app', 'device'], \
                                 ['ip', 'device', 'os'], \
