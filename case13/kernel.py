@@ -113,36 +113,58 @@ def DO(frm,to,fileno):
         if i==1: selcols=['ip', 'channel']; QQ=3;
         if i==2: selcols=['ip', 'channel']; QQ=4;
         if i==3: selcols=['ip', 'channel']; QQ=5;
+
         if i==4: selcols=['ip', 'device', 'os', 'app']; QQ=2;
         if i==5: selcols=['ip', 'device', 'os', 'app']; QQ=3;
         if i==6: selcols=['ip', 'device', 'os', 'app']; QQ=4;
         if i==7: selcols=['ip', 'device', 'os', 'app']; QQ=5;
+
         if i==8: selcols=['ip', 'day', 'hour']; QQ=2;
         if i==9: selcols=['ip', 'day', 'hour']; QQ=3;
         if i==10: selcols=['ip', 'day', 'hour']; QQ=4;
         if i==11: selcols=['ip', 'day', 'hour']; QQ=5;
+
         if i==12: selcols=['ip', 'app']; QQ=2;
         if i==13: selcols=['ip', 'app']; QQ=3;
         if i==14: selcols=['ip', 'app']; QQ=4;
         if i==15: selcols=['ip', 'app']; QQ=5;
+
         if i==16: selcols=['ip', 'app', 'os']; QQ=2;
         if i==17: selcols=['ip', 'app', 'os']; QQ=4;
         if i==18: selcols=['ip', 'app', 'os']; QQ=4;
         if i==19: selcols=['ip', 'app', 'os']; QQ=5;
+
         if i==20: selcols=['ip', 'device']; QQ=4;
-        if i==21: selcols=['ip', 'device']; QQ=2; # 5ng
-        if i==22: selcols=['app', 'channel']; QQ=2;
-        if i==23: selcols=['app', 'channel']; QQ=3;
-        if i==24: selcols=['app', 'channel']; QQ=4;
-        if i==25: selcols=['app', 'channel']; QQ=5;
-        if i==26: selcols=['ip', 'os']; QQ=4;
-        if i==27: selcols=['ip', 'os']; QQ=2; # 5ng
-        if i==28: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
-        if i==29: selcols=['ip', 'device', 'os', 'app']; QQ=5;
-        if i==30: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=4;
-        if i==31: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=5;
-        if i==32: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=3;
-        if i==33: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=2;
+        if i==21: selcols=['ip', 'device']; QQ=2;
+        if i==22: selcols=['ip', 'device']; QQ=3; # 5ng
+        if i==23: selcols=['ip', 'device']; QQ=5; # 5ng
+
+        if i==24: selcols=['app', 'channel']; QQ=2;
+        if i==25: selcols=['app', 'channel']; QQ=3;
+        if i==26: selcols=['app', 'channel']; QQ=4;
+        if i==27: selcols=['app', 'channel']; QQ=5;
+
+        if i==28: selcols=['ip', 'os']; QQ=4;
+        if i==29: selcols=['ip', 'os']; QQ=5;
+        if i==30: selcols=['ip', 'os']; QQ=3; # 5ng
+        if i==31: selcols=['ip', 'os']; QQ=2; # 5ng
+
+        if i==30: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
+        if i==31: selcols=['ip', 'device', 'os', 'app']; QQ=5;
+        if i==32: selcols=['ip', 'device', 'os', 'app']; QQ=3; # 4ng
+        if i==33: selcols=['ip', 'device', 'os', 'app']; QQ=4;
+        
+        if i==34: selcols=['ip', 'os', 'app', 'channel']; QQ=4;
+        if i==35: selcols=['ip', 'os', 'app', 'channel']; QQ=5;
+        if i==36: selcols=['ip', 'os', 'app', 'channel']; QQ=3;
+        if i==37: selcols=['ip', 'os', 'app', 'channel']; QQ=2;
+        if i==38: selcols=['ip', 'os', 'app', 'channel']; QQ=1;
+
+        if i==39: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=4;
+        if i==40: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=5;
+        if i==41: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=3;
+        if i==42: selcols=['ip', 'device', 'os', 'app', 'channel']; QQ=2;
+
         print('selcols',selcols,'QQ',QQ)
         
         filename='X%d_%d_%d.csv'%(i,frm,to)
@@ -378,7 +400,7 @@ frm=nrows-75000000 - 1000_0000*4
 to=frm+nchunk
 
 
-naddfeat=34
+naddfeat=41
 
 if '--do' in sys.argv:
   sub=DO(frm,to,0)
