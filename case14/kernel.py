@@ -152,7 +152,7 @@ def DO(frm,to,fileno):
                                        ('count', 'ip_app_os_count', ['ip','app', 'os','channel'], ['ip','app', 'os'], ['channel']), \
                                        ('var', 'ip_day_chl_var_hour', ['ip','day', 'hour','channel'], ['ip','day', 'channel'], ['hour']), \
                                        ('var', 'ip_app_chl_var_day',     ['ip','day', 'app','channel'], ['ip','app', 'channel'], ['day']), \
-                                       ('mean', 'ip_app_chl_mean_hour',  ['ip','day', 'hour','channel'], ['ip','app', 'channel'], ['hour'])  ]:
+                                       ('mean', 'ip_app_chl_mean_hour',  ['ip','app', 'hour','channel'], ['ip','app', 'channel'], ['hour'])  ]:
       if os.path.exists(f'{name}.csv'):
         ...
       else:
@@ -178,6 +178,7 @@ def DO(frm,to,fileno):
       
       gp = pd.read_csv(f'{name}.csv', header=None )
       train_df[ name ]= gp
+      del gp; gc.collect()
    
     args, tojoins = [], []
     for i in range(0,naddfeat):
@@ -272,12 +273,13 @@ def DO(frm,to,fileno):
       print( f'join {filename} {QQ} {i}' )
       gp=pd.read_csv(filename,header=None)
       train_df['X'+str(i)]=gp
+      del gp; gc.collect()
 
     print('doing nextClick')
    
-    # make nextClick
-    new_feature = 'nextClick'
-    filename='nextClick_%d_%d.csv'%(frm,to)
+    # make nextClick1
+    new_feature = 'nextClick1'
+    filename='nextClick1_%d_%d.csv'%(frm,to)
     if os.path.exists(filename):
       print('loading from save file')
       QQ=pd.read_csv(filename).values
@@ -296,6 +298,8 @@ def DO(frm,to,fileno):
       print('saving')
       pd.DataFrame(QQ).to_csv(filename,index=False)
     train_df[new_feature] = QQ
+    predictors=[]
+    predictors.append(new_feature)
     
     # make nextClick2
     new_feature = 'nextClick2'
@@ -316,9 +320,7 @@ def DO(frm,to,fileno):
       QQ= list(reversed(next_clicks))
       print('saving')
       pd.DataFrame(QQ).to_csv(filename,index=False)
-
     train_df[new_feature] = QQ
-    predictors=[]
     predictors.append(new_feature)
 
     train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
