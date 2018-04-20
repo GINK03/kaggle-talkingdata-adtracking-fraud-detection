@@ -188,9 +188,14 @@ def DO(frm,to,fileno):
       filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
       if os.path.exists(filename) is False:
         jobs.append( arg )
-    import concurrent.futures
-    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as exe:
-      exe.map( map_nexts, jobs )
+
+    if '--fork' in sys.argv:
+      import concurrent.futures
+      with concurrent.futures.ProcessPoolExecutor(max_workers=2) as exe:
+        exe.map( map_nexts, jobs )
+    else:
+      for job in jobs:
+        map_nexts(job)
 
     for arg in args:
       index, tup = arg
