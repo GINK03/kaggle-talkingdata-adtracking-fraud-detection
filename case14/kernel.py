@@ -144,6 +144,37 @@ def DO(frm,to,fileno):
     train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
     
     gc.collect()
+    
+    # default singles 
+    for dealtype, name, filters, bys, group in [ ('count', 'ip_tcount', ['ip','day','hour','channel'], ['ip','day','hour'], ['channel']), \
+                                       ('count', 'ip_app_count', ['ip','app','channel'], ['ip','app'], ['channel']), \
+                                       ('count', 'ip_app_os_count', ['ip','app', 'os','channel'], ['ip','app', 'os'], ['channel']), \
+                                       ('count', 'ip_app_os_count', ['ip','app', 'os','channel'], ['ip','app', 'os'], ['channel']), \
+                                       ('var', 'ip_day_chl_var_hour', ['ip','day', 'hour','channel'], ['ip','day', 'channel'], ['hour']), \
+                                       ('var', 'ip_app_chl_var_day',     ['ip','day', 'app','channel'], ['ip','app', 'channel'], ['day']), \
+                                       ('mean', 'ip_app_chl_mean_hour',  ['ip','day', 'hour','channel'], ['ip','app', 'channel'], ['hour'])  ]:
+      if os.path.exists(f'{name}.csv'):
+        ...
+      else:
+        if dealtype == 'count':
+          print(f'grouping by {bys} {group} combination...')
+          gp = train_df[filters].groupby(by=bys)[group].count().reset_index().rename(index=str, columns={'channel': name})
+          train_df = train_df.merge(gp, on=[bys], how='left')
+          train_df[ name ].to_csv(f'{name}.csv')
+          del gp; gc.collect()
+        if dealtype == 'var':
+          print(f'grouping by : {name} of variance')
+          gp = train_df[filters].groupby(by=bys)[group].var().reset_index().rename(index=str, columns={'hour': name})
+          train_df = train_df.merge(gp, on=filters, how='left')
+          del gp;gc.collect()
+        if dealtype == 'mean':
+          print(f'grouping by : {name} of mean')
+          gp = train_df[filters].groupby(by=bys)[group].mean().reset_index().rename(index=str, columns={'hour': name})
+          train_df = train_df.merge(gp, on=filters, how='left')
+          del gp;gc.collect()
+      
+      gp = pd.read_csv(f'{name}.csv', header=None )
+      train_df[name ]= gp
    
     args, tojoins = [], []
     for i in range(0,naddfeat):
@@ -235,6 +266,7 @@ def DO(frm,to,fileno):
     print('join extract futures')
     for tojoin in tojoins:
       filename, QQ, i = tojoin
+      print( f'join {filename} {QQ} {i}' )
       gp=pd.read_csv(filename,header=None)
       train_df['X'+str(i)]=gp
 
@@ -273,36 +305,6 @@ def DO(frm,to,fileno):
     del QQ
     gc.collect()
     
-
-    for dealtype, name, filters, bys, group in [ ('count', 'ip_tcount', ['ip','day','hour','channel'], ['ip','day','hour'], ['channel']), \
-                                       ('count', 'ip_app_count', ['ip','app','channel'], ['ip','app'], ['channel']), \
-                                       ('count', 'ip_app_os_count', ['ip','app', 'os','channel'], ['ip','app', 'os'], ['channel']), \
-                                       ('count', 'ip_app_os_count', ['ip','app', 'os','channel'], ['ip','app', 'os'], ['channel']), \
-                                       ('var', 'ip_day_chl_var_hour', ['ip','day', 'hour','channel'], ['ip','day', 'channel'], ['hour']), \
-                                       ('var', 'ip_app_chl_var_day',     ['ip','day', 'app','channel'], ['ip','app', 'channel'], ['day']), \
-                                       ('mean', 'ip_app_chl_mean_hour',  ['ip','day', 'hour','channel'], ['ip','app', 'channel'], ['hour'])  ]:
-      if os.path.exists(f'{name}.csv'):
-        ...
-      else:
-        if dealtype == 'count':
-          print(f'grouping by {bys} {group} combination...')
-          gp = train_df[filters].groupby(by=bys)[group].count().reset_index().rename(index=str, columns={'channel': name})
-          train_df = train_df.merge(gp, on=[bys], how='left')
-          train_df[ name ].to_csv(f'{name}.csv')
-          del gp; gc.collect()
-        if dealtype == 'var':
-          print(f'grouping by : {name} of variance')
-          gp = train_df[filters].groupby(by=bys)[group].var().reset_index().rename(index=str, columns={'hour': name})
-          train_df = train_df.merge(gp, on=filters, how='left')
-          del gp;gc.collect()
-        if dealtype == 'mean':
-          print(f'grouping by : {name} of mean')
-          gp = train_df[filters].groupby(by=bys)[group].mean().reset_index().rename(index=str, columns={'hour': name})
-          train_df = train_df.merge(gp, on=filters, how='left')
-          del gp;gc.collect()
-      
-      gp = pd.read_csv(f'{name}.csv', header=None )
-      train_df[name ]= gp
 
     train_df.info()
     test_df  = train_df[len_train:]
