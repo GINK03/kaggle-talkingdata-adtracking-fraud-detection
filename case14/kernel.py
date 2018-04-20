@@ -158,19 +158,19 @@ def DO(frm,to,fileno):
       else:
         if dealtype == 'count':
           print(f'grouping by {bys} {group} combination...')
-          gp = train_df[filters].groupby(by=bys)[group].count().reset_index().rename(index=str, columns={'channel': name})
-          train_df = train_df.merge(gp, on=[bys], how='left')
+          gp = train_df[filters].groupby(by=bys)[group].count().reset_index().rename(index=str, columns={group[0]: name})
+          train_df = train_df.merge(gp, on=bys, how='left')
           train_df[ name ].to_csv(f'{name}.csv')
           del gp; gc.collect()
         if dealtype == 'var':
           print(f'grouping by : {name} of variance')
-          gp = train_df[filters].groupby(by=bys)[group].var().reset_index().rename(index=str, columns={'hour': name})
-          train_df = train_df.merge(gp, on=filters, how='left')
+          gp = train_df[filters].groupby(by=bys)[group].var().reset_index().rename(index=str, columns={group[0]: name})
+          train_df = train_df.merge(gp, on=bys, how='left')
           del gp;gc.collect()
         if dealtype == 'mean':
           print(f'grouping by : {name} of mean')
-          gp = train_df[filters].groupby(by=bys)[group].mean().reset_index().rename(index=str, columns={'hour': name})
-          train_df = train_df.merge(gp, on=filters, how='left')
+          gp = train_df[filters].groupby(by=bys)[group].mean().reset_index().rename(index=str, columns={group[0]: name})
+          train_df = train_df.merge(gp, on=bys, how='left')
           del gp;gc.collect()
       
       gp = pd.read_csv(f'{name}.csv', header=None )
