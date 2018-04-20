@@ -152,15 +152,18 @@ def DO(frm,to,fileno):
                                 ['ip', 'device', 'os'], \
                                 ['ip', 'app', 'os']
                          ] ):
-      print( f'make nextClick {index}' )
-      new_feature = f'nextClick_{index:04d}'
+      key = '_'.join( tup )
+      print( f'make nextClick {index} {key}' )
+      new_feature = f'nextClick_{index:04d}_{key}'
       filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
       if os.path.exists(filename):
         print('loading from save file')
         QQ=pd.read_csv(filename).values
       else:
         D=2**26
-        key = '_'.join( [train_df[x].astype(str) for x in tup ]  )
+        import functools
+
+        key = functools.reduce(lambda x,y: x + '_' + y, [train_df[x].astype(str) for x in tup ]  )
         train_df['category'] = ( key ).apply(hash) % D
         click_buffer= np.full(D, 3000000000, dtype=np.uint32)
         train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
