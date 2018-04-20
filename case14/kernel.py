@@ -145,20 +145,17 @@ def DO(frm,to,fileno):
     
     gc.collect()
     
-    for index, tup in enumerate([ ['ip', 'app', 'device', 'os'], \
-                                ['ip', 'app', 'device'], \
-                                ['ip', 'device', 'os'], \
-                                ['ip', 'app', 'os'], \
-                                ['ip', 'device', 'os'], \
-                                ['ip', 'app', 'os']
-                         ] ):
+    def map_nexts(arg):
+      global train_df
+      index, tup = arg
       key = '_'.join( tup )
       print( f'make nextClick {index} {key}' )
       new_feature = f'nextClick_{index:04d}_{key}'
       filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
       if os.path.exists(filename):
-        print('loading from save file')
-        QQ=pd.read_csv(filename).values
+        print('already processed')
+        return 
+        #QQ=pd.read_csv(filename).values
       else:
         D=2**26
         import functools
@@ -175,9 +172,34 @@ def DO(frm,to,fileno):
         QQ= list(reversed(next_clicks) )
         print('saving')
         pd.DataFrame(QQ).to_csv(filename,index=False)
-      train_df[new_feature] = QQ
-      del QQ; gc.collect()
-    
+        #train_df[new_feature] = QQ
+        del QQ; gc.collect()
+    args = [ (index, tup) for index, tup in enumerate([ ['ip', 'app', 'device', 'os'], \
+                                ['ip', 'app', 'device'], \
+                                ['ip', 'device', 'os'], \
+                                ['ip', 'app', 'os'], \
+                                ['ip', 'device', 'os'], \
+                                ['ip', 'app', 'os']
+                         ] ) ]
+    jobs = []
+    for arg in args:
+      index, tup = arg
+      filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
+      if os.path.exists(filename) is False:
+        jobs.append( arg )
+    import concurrent.futures
+    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as exe:
+      exe.map( map_nexts, jobs )
+
+    for arg in args:
+      index, tup = arg
+      filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
+      nexts = pd.read_csv(filename).values
+      key = '_'.join( tup )
+      new_feature = f'nextClick_{index:04d}_{key}'
+      train_df[new_feature] = nexts
+      del nexts; gc.collect()
+     
     # default singles 
     for dealtype, name, filters, bys, group in [ ('count', 'ip_tcount', ['ip','day','hour','channel'], ['ip','day','hour'], ['channel']), \
                                        ('count', 'ip_app_count', ['ip','app','channel'], ['ip','app'], ['channel']), \
