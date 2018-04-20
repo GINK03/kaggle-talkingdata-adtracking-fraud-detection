@@ -270,64 +270,51 @@ def DO(frm,to,fileno):
     print('join extract futures')
     for tojoin in tojoins:
       filename, QQ, i = tojoin
+      if i == 3:
+        continue
       print( f'join {filename} {QQ} {i}' )
       gp=pd.read_csv(filename,header=None)
       train_df['X'+str(i)]=gp
       del gp; gc.collect()
 
     print('doing nextClick')
-   
-    # make nextClick1
-    new_feature = 'nextClick1'
-    filename='nextClick1_%d_%d.csv'%(frm,to)
-    if os.path.exists(filename):
-      print('loading from save file')
-      QQ=pd.read_csv(filename).values
-    else:
-      D=2**26
-      train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
-          + "_" + train_df['os'].astype(str)).apply(hash) % D
-      click_buffer= np.full(D, 3000000000, dtype=np.uint32)
-      train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
-      next_clicks= []
-      for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
-          next_clicks.append(click_buffer[category]-t)
-          click_buffer[category]= t
-      del(click_buffer)
-      QQ= list(reversed(next_clicks))
-      print('saving')
-      pd.DataFrame(QQ).to_csv(filename,index=False)
-    train_df[new_feature] = QQ
+  
     predictors=[]
-    predictors.append(new_feature)
     
-    # make nextClick2
-    new_feature = 'nextClick2'
-    filename='nextClick2_%d_%d.csv'%(frm,to)
-    if os.path.exists(filename):
-      print('loading from save file')
-      QQ=pd.read_csv(filename).values
-    else:
-      D=2**26
-      train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['device'].astype(str) + "_" + train_df['os'].astype(str)).apply(hash) % D
-      click_buffer= np.full(D, 3000000000, dtype=np.uint32)
-      train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
-      next_clicks= []
-      for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
-          next_clicks.append(click_buffer[category]-t)
-          click_buffer[category]= t
-      del(click_buffer)
-      QQ= list(reversed(next_clicks))
-      print('saving')
-      pd.DataFrame(QQ).to_csv(filename,index=False)
-    train_df[new_feature] = QQ
-    predictors.append(new_feature)
+    for index, tup in enumerate([ ['ip', 'app', 'device', 'os'], \
+                                ['ip', 'app', 'device'], \ 
+                                ['ip', 'device', 'os'], \ 
+                                ['ip', 'app', 'os'], \ 
+                                ['ip', 'device', 'os'], \ 
+                                ['ip', 'app', 'os'], \ 
+                         ] ):
+      print( 'make nextClick {index}' )
+      new_feature = f'nextClick_{index:04d}'
+      filename = f'nextClick_{index:04d}_{frm:016d}_{to:016d}.csv'
+      if os.path.exists(filename):
+        print('loading from save file')
+        QQ=pd.read_csv(filename).values
+      else:
+        D=2**26
+        train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
+            + "_" + train_df['os'].astype(str)).apply(hash) % D
+        click_buffer= np.full(D, 3000000000, dtype=np.uint32)
+        train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
+        next_clicks= []
+        for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
+            next_clicks.append(click_buffer[category]-t)
+            click_buffer[category]= t
+        del(click_buffer)
+        QQ= list(reversed(next_clicks))
+        print('saving')
+        pd.DataFrame(QQ).to_csv(filename,index=False)
+      train_df[new_feature] = QQ
+      predictors.append(new_feature)
+      del QQ; gc.collect()
 
-    train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
-    predictors.append(new_feature+'_shift')
+    #train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
+    #predictors.append(new_feature+'_shift')
     
-    del QQ
-    gc.collect()
     
 
     train_df.info()
