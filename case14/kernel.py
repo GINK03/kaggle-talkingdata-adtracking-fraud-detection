@@ -145,7 +145,7 @@ def DO(frm,to,fileno):
     
     gc.collect()
    
-    args = []
+    args, tojoins = [], []
     for i in range(0,naddfeat):
         if i==0: selcols=['ip', 'channel']; QQ=2;
         if i==1: selcols=['ip', 'channel']; QQ=3;
@@ -213,22 +213,35 @@ def DO(frm,to,fileno):
         filename='X%d_%d_%d.csv'%(i,frm,to)
         
         if os.path.exists(filename):
+          tojoins.append( (filename, QQ, i) )
+          '''
             if QQ==5: 
                 gp=pd.read_csv(filename,header=None)
                 train_df['X'+str(i)]=gp
             else: 
                 gp=pd.read_csv(filename)
                 train_df['X'+str(i)]=gp
-                #train_df = train_df.merge(gp, on=selcols[0:len(selcols)-1], how='left')
+          '''
         else:
             arg =  (i, QQ, selcols, filename) 
             args.append( arg )
     import concurrent.futures
-    with concurrent.futures.ProcessPoolExecutor(max_workers=12) as exe:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as exe:
       exe.map( map_csv, args )
     if len(args) != 0:
       print('just only make csv')
       sys.exit(0)
+
+    print('join extract futures')
+    for tojoin in tojoins:
+      filename, QQ, i = tojoin
+      if QQ==5: 
+          gp=pd.read_csv(filename,header=None)
+          train_df['X'+str(i)]=gp
+      else: 
+          gp=pd.read_csv(filename)
+          train_df['X'+str(i)]=gp
+
     print('doing nextClick')
     predictors=[]
     
