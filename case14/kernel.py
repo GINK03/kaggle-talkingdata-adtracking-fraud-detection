@@ -178,8 +178,8 @@ def DO(frm,to,fileno):
     args = [ (index, tup) for index, tup in enumerate([ ['ip', 'app', 'device', 'os'], \
                                 ['ip', 'app', 'device'], \
                                 ['ip', 'device', 'os'], \
-                                ['ip', 'app', 'os'], \
-                                ['ip', 'device', 'os'], \
+                                ['app', 'os', 'device'], \
+                                ['ip', 'device'], \
                                 ['ip', 'app', 'os']
                          ] ) ]
     jobs = []
@@ -382,11 +382,16 @@ def Fun():
     print("test size : ", len(test_df))
     target = 'is_attributed'
 
+    prev_imps = json.load( open('./files/importances_auc=0.9769783157866135') )
+    prev_imps_ignore = [ x.pop(0) for x in sorted(prev_imps, key=lambda x:x[1])[:-35] ]
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
-    ignores.extend( ['x1', 'x7', 'x4', 'day', 'nextClick_shift', 'factrize'] )
+    ignores.extend( ['nextClick_shift', 'factrize'] )
     ignores.extend( ['ip_chl_ind'] )
+    ignores.extend( prev_imps_ignore )
+    print('ignores', ignores )
     predictors = [ p for p in train_columns if p not in ignores ]
     predictors.extend( ['epochtime'] )
+
     #predictors.extend( ['ip_chl_ind'] )
     # regression test
     # predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
@@ -401,13 +406,13 @@ def Fun():
     params = {
       'learning_rate': 0.20,
       #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-      'num_leaves': 7,  # 2^max_depth - 1
-      'max_depth': 3,  # -1 means no limit
+      'num_leaves': 5,  # 2^max_depth - 1
+      'max_depth': 2,  # -1 means no limit
       'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
       'max_bin': 100,  # Number of bucketed bin for feature values
       'subsample': 0.7,  # Subsample ratio of the training instance.
       'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
-      'colsample_bytree': 0.9,  # Subsample ratio of columns when constructing each tree.
+      'colsample_bytree': 0.8,  # Subsample ratio of columns when constructing each tree.
       'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
       'scale_pos_weight': 200 # because training data is extremely unbalanced 
     }
