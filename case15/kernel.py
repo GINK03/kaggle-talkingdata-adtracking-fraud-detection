@@ -125,8 +125,10 @@ def DO(frm,to,fileno):
         if i==14: selcols=['ip', 'os']; QQ=4; # 強い
         if i==15: selcols=['ip', 'os']; QQ=2; # 5ng
         if i==16: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
-        if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5;
+        if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5; # 弱い
         if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証-> 18
+        if i==19: selcols=['ip', 'hour', 'channel']; QQ=4; # 検証
+        if i==20: selcols=['ip', 'hour', 'app']; QQ=4; # 検証
         print('selcols',selcols,'QQ',QQ)
         
         filename='X%d_%d_%d.csv'%(i,frm,to)
@@ -361,7 +363,7 @@ frm=nrows-75000000 - 1000_0000*4
 to=frm+nchunk
 
 
-naddfeat=19
+naddfeat=21
 
 if '--do' in sys.argv:
   sub=DO(frm,to,0)
