@@ -115,7 +115,7 @@ def DO(frm,to,fileno):
         if i==4: selcols=['ip', 'app', 'hour']; QQ=4; # ip,day,hour,4 微妙
         if i==5: selcols=['ip', 'day', 'hour']; QQ=5;
         if i==6: selcols=['ip', 'app']; QQ=4;
-        if i==7: selcols=['ip', 'hour', 'app']; QQ=5; # 5 ng; 検証中
+        if i==7: selcols=['ip', 'hour', 'app']; QQ=5; # 5 ng; 検証中 -> 3
         if i==8: selcols=['ip', 'app', 'os']; QQ=4;
         if i==9: selcols=['ip', 'app', 'os']; QQ=5; # 弱い
         if i==10: selcols=['ip', 'device']; QQ=4; # 中くらい
@@ -126,7 +126,7 @@ def DO(frm,to,fileno):
         if i==15: selcols=['ip', 'os']; QQ=2; # 5ng
         if i==16: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
         if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5;
-        if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証中
+        if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証-> 18
         print('selcols',selcols,'QQ',QQ)
         
         filename='X%d_%d_%d.csv'%(i,frm,to)
