@@ -350,14 +350,13 @@ def DO(frm,to,fileno):
     print("vars and data type: ")
     train_df.info()
     
-    test_df = train_df[len_train:]
-    val_df = train_df[(len_train-val_size):len_train]
+    test_df  = train_df[len_train:]
+    val_df   = train_df[(len_train-val_size):len_train]
     train_df = train_df[:(len_train-val_size)]
   
-    #np.save( 'files/test_df', test_df.values ) 
-    #np.save( 'files/val_df', val_df.values)
-    #np.save( 'files/train_df', train_df.values)
-
+    # np.save( 'files/test_df', test_df.values ) 
+    # np.save( 'files/val_df', val_df.values)
+    # np.save( 'files/train_df', train_df.values)
     test_df.to_pickle('files/test_df.pkl')
     val_df.to_pickle('files/val_df.pkl')
     train_df.to_pickle('files/train_df.pkl')
@@ -382,9 +381,9 @@ def Fun():
       train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
     else:
       test_df  = pd.read_pickle('files/test_df.pkl').fillna(-1.0)
-      val2_df  = train_df[-250_0000:]
+      # val2_df  = train_df[-250_0000:]
       val_df   = pd.read_pickle('files/val_df.pkl').fillna(-1.0)
-      val_df   = val_df.append( val2_df )
+      # val_df   = val_df.append( val2_df )
       train_df = pd.read_pickle('files/train_df.pkl').fillna(-1.0)
 
     if '--merge' in sys.argv:
