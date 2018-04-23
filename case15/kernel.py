@@ -104,15 +104,43 @@ def DO(frm,to,fileno):
     print('Extracting new features...')
     train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
     train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
-    
+
+    # 差分
+    train_df['wday'] = train_df['click_time'].dt.dayofweek.astype('uint8') 
+    most_freq_hours_in_test_data = [4,5,9,10,13,14]
+    least_freq_hours_in_test_data = [6, 11, 15]
+    train_df['in_test_hh'] = ( 3
+	    		 - 2 * train_df['hour'].isin( most_freq_hours_in_test_data )
+			     - 1 * train_df['hour'].isin( least_freq_hours_in_test_data )).astype('uint8')
     gc.collect()
     
+    def add_counts(df, cols):
+      arr_slice = df[cols].values
+      unq, unqtags, counts = np.unique(np.ravel_multi_index(arr_slice.T, arr_slice.max(axis=0)+1),
+                                     return_inverse=True, return_counts=True)
+      df["_".join(cols)+"_count"] = counts[unqtags]
+    
+    # 差分
+    add_counts(train_df, ['ip'])
+    add_counts(train_df, ['os', 'device'])
+    add_counts(train_df, ['os', 'app', 'channel'])
+
+    add_counts(train_df, ['ip', 'device'])
+    add_counts(train_df, ['app', 'channel'])
+
+    add_counts(train_df, ['ip', 'wday', 'in_test_hh'])
+    add_counts(train_df, ['ip', 'wday', 'hour'])
+    add_counts(train_df, ['ip', 'os', 'wday', 'hour'])
+    add_counts(train_df, ['ip', 'app', 'wday', 'hour'])
+    add_counts(train_df, ['ip', 'device', 'wday', 'hour'])
+    add_counts(train_df, ['ip', 'app', 'os'])
+    add_counts(train_df, ['wday', 'hour', 'app'])
     for i in range(0,naddfeat):
         if i==0: selcols=['ip', 'channel']; QQ=4;
         if i==1: selcols=['ip', 'channel']; QQ=5;
         if i==2: selcols=['ip', 'device', 'os', 'app']; QQ=4;
         if i==3: selcols=['ip', 'device', 'os', 'app']; QQ=5;
-        if i==4: selcols=['ip', 'app', 'hour']; QQ=4; # ip,day,hour,4 微妙
+        if i==4: selcols=['ip', 'app', 'hour']; QQ=4; # ip,day,hour,4 微妙 -> 弱い
         if i==5: selcols=['ip', 'day', 'hour']; QQ=5;
         if i==6: selcols=['ip', 'app']; QQ=4;
         if i==7: selcols=['ip', 'hour', 'app']; QQ=5; # 5 ng; 検証中 -> 3
@@ -125,7 +153,7 @@ def DO(frm,to,fileno):
         if i==14: selcols=['ip', 'os']; QQ=4; # 強い
         if i==15: selcols=['ip', 'os']; QQ=2; # 5ng
         if i==16: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
-        if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5; # 弱い
+        if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5; # 弱い -> 弱い
         if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証-> 18
         if i==19: selcols=['ip', 'hour', 'channel']; QQ=4; # 検証 -> 11
         if i==20: selcols=['ip', 'hour', 'app']; QQ=4; # 検証 -> 9
@@ -316,6 +344,9 @@ def Fun():
       test_df  = pd.read_pickle('files/test_df.pkl').fillna(-1.0)
       val_df   = pd.read_pickle('files/val_df.pkl').fillna(-1.0)
       train_df = pd.read_pickle('files/train_df.pkl').fillna(-1.0)
+
+    if '--merge' in sys.argv:
+      train_df = train_df.append( val_df )
     print("train size: ", len(train_df))
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
@@ -337,14 +368,14 @@ def Fun():
     print("Training...")
     start_time = time.time()
     params = {
-      'learning_rate': 0.20,
+      'learning_rate'   : 0.20,
       #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-      'num_leaves': 7,  # 2^max_depth - 1
-      'max_depth': 3,  # -1 means no limit
+      'num_leaves'      : 7,  # 2^max_depth - 1
+      'max_depth'       : 3,  # -1 means no limit
       'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
-      'max_bin': 100,  # Number of bucketed bin for feature values
-      'subsample': 0.7,  # Subsample ratio of the training instance.
-      'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
+      'max_bin'         : 100,  # Number of bucketed bin for feature values
+      'subsample'       : 0.7,  # Subsample ratio of the training instance.
+      'subsample_freq'  : 1,  # frequence of subsample, <=0 means no enable
       'colsample_bytree': 0.9,  # Subsample ratio of columns when constructing each tree.
       'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
       'scale_pos_weight': 200 # because training data is extremely unbalanced 
@@ -356,9 +387,9 @@ def Fun():
                             target, 
                             objective='binary', 
                             metrics='auc',
-                            early_stopping_rounds=30, 
+                            #early_stopping_rounds=30, 
                             verbose_eval=True, 
-                            num_boost_round=1000, 
+                            num_boost_round=250, 
                             categorical_features=categorical)
 
     print('[{}]: model training time'.format(time.time() - start_time))
