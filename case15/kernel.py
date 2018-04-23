@@ -210,8 +210,8 @@ def DO(frm,to,fileno):
             if not debug:
                  gp.to_csv(filename,index=False)
             
-        del gp
-        gc.collect()    
+            del gp
+            gc.collect()    
 
     print('doing nextClick')
     predictors=[]
@@ -312,10 +312,18 @@ def DO(frm,to,fileno):
       gc.collect()
 
     print('grouping by : ip_app_os_var_hour')
-    gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
-    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
-    del gp
-    gc.collect()
+    if os.path.exists('ip_app_os_var_hour.pkl'):
+      print('load ip_app_os_var_hour')
+      series = pd.read_pickle('ip_app_os_var_hour.pkl')
+      train_df[ 'ip_app_os_var_hour' ] = series
+      del series; gc.collect()
+    else:
+      gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
+      train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
+      series  = train_df['ip_app_os_var_hour']
+      series.to_pickle('ip_app_os_var_hour.pkl')
+      del gp
+      gc.collect()
 
     print('grouping by : ip_app_channel_var_day')
     gp = train_df[['ip','app', 'channel', 'day']].groupby(by=['ip', 'app', 'channel'])[['day']].var().reset_index().rename(index=str, columns={'day': 'ip_app_channel_var_day'})
