@@ -291,17 +291,17 @@ def DO(frm,to,fileno):
       gc.collect()
 
     print('grouping by ip_app_os combination...')
-    if os.path.exists('ip_app_os_count.pkl'):
-      print('load ip_app_os_count')
-      series = pd.read_pickle('ip_app_os_count.pkl')
-      train_df[ 'ip_app_os_count' ] = series
+    if os.path.exists('ip_app_os_count_by_chl.pkl'):
+      print('load ip_app_os_count_by_chl')
+      series = pd.read_pickle('ip_app_os_count_by_chl.pkl')
+      train_df[ 'ip_app_os_count_by_chl' ] = series
       del series; gc.collect()
     
     else:
-      gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
+      gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count_by_chl'})
       train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
-      series  = train_df['ip_app_os_count']
-      series.to_pickle('ip_app_os_count.pkl')
+      series  = train_df['ip_app_os_count_by_chl']
+      series.to_pickle('ip_app_os_count_by_chl.pkl')
       del gp
       gc.collect()
 
