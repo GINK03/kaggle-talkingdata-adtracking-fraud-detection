@@ -247,9 +247,18 @@ def DO(frm,to,fileno):
 
     ## 繰り返し
     start = time.time()
-    df['click_time'] = (df['click_time'].astype(np.int64) // 10 ** 9).astype(np.int32)
-    df['nextClick2'] = (df.groupby(['ip', 'app', 'device', 'os']).click_time.shift(-1) - df.click_time).astype(np.float32)
-    df['prevClick2'] = (df.click_time - df.groupby(['ip', 'app', 'device', 'os']).click_time.shift(+1)).astype(np.float32)
+    train_df['click_time'] = (train_df['click_time'].astype(np.int64) // 10 ** 9).astype(np.int32)
+    if os.path.exists('nextClick2.csv'):
+      train_df['nextClick2'] = pd.read_csv('nextClick2.csv')
+    else:
+      train_df['nextClick2'] = (train_df.groupby(['ip', 'app', 'device', 'os']).click_time.shift(-1) - train_df.click_time).astype(np.float32)
+      train_df['nextClick2'].to_csv('nextClick2.csv', index=False)
+    if os.path.exists('prevClick2.csv'):
+      train_df['prevClick2'] = pd.read_csv('prevClick2.csv')
+    else:
+      train_df['prevClick2'] = (train_df.click_time - train_df.groupby(['ip', 'app', 'device', 'os']).click_time.shift(+1)).astype(np.float32)
+      train_df['prevClick2'].to_csv('prevClick2.csv', index=False)
+
     print('Elapsed: {} seconds'.format(time.time() - start))
     ## end 繰り返し
 
