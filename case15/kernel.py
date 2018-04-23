@@ -146,29 +146,29 @@ def DO(frm,to,fileno):
     add_counts(train_df, ['ip', 'device', 'wday', 'hour'])
     add_counts(train_df, ['ip', 'app', 'os'])
     add_counts(train_df, ['wday', 'hour', 'app'])
-    for i in range(0,naddfeat):
-        if i==0: selcols=['ip', 'channel']; QQ=4;
-        if i==1: selcols=['ip', 'channel']; QQ=5;
-        if i==2: selcols=['ip', 'device', 'os', 'app']; QQ=4;
-        if i==3: selcols=['ip', 'device', 'os', 'app']; QQ=5;
-        if i==4: selcols=['ip', 'app', 'hour']; QQ=4; # ip,day,hour,4 微妙 -> 弱い
-        if i==5: selcols=['ip', 'day', 'hour']; QQ=5;
-        if i==6: selcols=['ip', 'app']; QQ=4;
-        if i==7: selcols=['ip', 'hour', 'app']; QQ=5; # 5 ng; 検証中 -> 3
-        if i==8: selcols=['ip', 'app', 'os']; QQ=4;
-        if i==9: selcols=['ip', 'app', 'os']; QQ=5; # 弱い
-        if i==10: selcols=['ip', 'device']; QQ=4; # 中くらい
-        if i==11: selcols=['ip', 'device']; QQ=2; # 強い
-        if i==12: selcols=['app', 'channel']; QQ=4; # 強い
-        if i==13: selcols=['app', 'channel']; QQ=5; # 強い
-        if i==14: selcols=['ip', 'os']; QQ=4; # 強い
-        if i==15: selcols=['ip', 'os']; QQ=2; # 5ng
+    for i in range(0, naddfeat):
+        if i==0: selcols=['ip', 'channel'];              QQ=4;
+        if i==1: selcols=['ip', 'channel'];              QQ=5;
+        if i==2: selcols=['ip', 'device', 'os', 'app'];  QQ=4;
+        if i==3: selcols=['ip', 'device', 'os', 'app'];  QQ=5;
+        if i==4: selcols=['ip', 'app', 'hour'];          QQ=4; # ip,day,hour,4 微妙 -> 弱い
+        if i==5: selcols=['ip', 'day', 'hour'];          QQ=5;
+        if i==6: selcols=['ip', 'app'];                  QQ=4;
+        if i==7: selcols=['ip', 'hour', 'app'];          QQ=5; # 5 ng; 検証中 -> 3
+        if i==8: selcols=['ip', 'app', 'os'];            QQ=4;
+        if i==9: selcols=['ip', 'app', 'os'];            QQ=5; # 弱い
+        if i==10: selcols=['ip', 'device'];              QQ=4; # 中くらい
+        if i==11: selcols=['ip', 'device'];              QQ=2; # 強い
+        if i==12: selcols=['app', 'channel'];            QQ=4; # 強い
+        if i==13: selcols=['app', 'channel'];            QQ=5; # 強い
+        if i==14: selcols=['ip', 'os'];                  QQ=4; # 強い
+        if i==15: selcols=['ip', 'os'];                  QQ=2; # 5ng
         if i==16: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
         if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5; # 弱い -> 弱い
-        if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証-> 18
-        if i==19: selcols=['ip', 'hour', 'channel']; QQ=4; # 検証 -> 11
-        if i==20: selcols=['ip', 'hour', 'app']; QQ=4; # 検証 -> 9
-        if i==21: selcols=['ip', 'app', 'hour', 'os']; QQ=4; # 検証 -> 9
+        if i==18: selcols=['ip', 'hour', 'os'];          QQ=4; # 検証-> 18
+        if i==19: selcols=['ip', 'hour', 'channel'];     QQ=4; # 検証 -> 11
+        if i==20: selcols=['ip', 'hour', 'app'];         QQ=4; # 検証 -> 9
+        if i==21: selcols=['ip', 'app', 'hour', 'os'];   QQ=4; # 検証 -> 9
         print('selcols',selcols,'QQ',QQ)
         
         filename='X%d_%d_%d.csv'%(i,frm,to)
