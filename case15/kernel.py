@@ -127,8 +127,9 @@ def DO(frm,to,fileno):
         if i==16: selcols=['ip', 'device', 'os', 'app']; QQ=2; # 4ng
         if i==17: selcols=['ip', 'device', 'os', 'app']; QQ=5; # 弱い
         if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証-> 18
-        if i==19: selcols=['ip', 'hour', 'channel']; QQ=4; # 検証
-        if i==20: selcols=['ip', 'hour', 'app']; QQ=4; # 検証
+        if i==19: selcols=['ip', 'hour', 'channel']; QQ=4; # 検証 -> 11
+        if i==20: selcols=['ip', 'hour', 'app']; QQ=4; # 検証 -> 9
+        if i==21: selcols=['ip', 'app', 'hour', 'os']; QQ=4; # 検証 
         print('selcols',selcols,'QQ',QQ)
         
         filename='X%d_%d_%d.csv'%(i,frm,to)
@@ -173,10 +174,10 @@ def DO(frm,to,fileno):
 
     print('doing nextClick')
     predictors=[]
-    
+   
+    # start
     new_feature = 'nextClick'
     filename='nextClick_%d_%d.csv'%(frm,to)
-
     if os.path.exists(filename):
         print('loading from save file')
         QQ=pd.read_csv(filename).values
@@ -185,7 +186,6 @@ def DO(frm,to,fileno):
         train_df['category'] = (train_df['ip'].astype(str) + "_" + train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
             + "_" + train_df['os'].astype(str)).apply(hash) % D
         click_buffer= np.full(D, 3000000000, dtype=np.uint32)
-
         train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
         next_clicks= []
         for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
@@ -193,17 +193,42 @@ def DO(frm,to,fileno):
             click_buffer[category]= t
         del(click_buffer)
         QQ= list(reversed(next_clicks))
-
         if not debug:
             print('saving')
             pd.DataFrame(QQ).to_csv(filename,index=False)
-
     train_df[new_feature] = QQ
     predictors.append(new_feature)
+    train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
+    predictors.append(new_feature+'_shift')
+    # end
+
+    ## 繰り返し
+    new_feature = 'nextClick2'
+    filename='nextClick2_%d_%d.csv'%(frm,to)
+    if os.path.exists(filename):
+        print('loading from save file')
+        QQ=pd.read_csv(filename).values
+    else:
+        D=2**26
+        train_df['category'] = (train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
+            + "_" + train_df['os'].astype(str)).apply(hash) % D
+        click_buffer= np.full(D, 3000000000, dtype=np.uint32)
+        train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
+        next_clicks= []
+        for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
+            next_clicks.append(click_buffer[category]-t)
+            click_buffer[category]= t
+        del(click_buffer)
+        QQ= list(reversed(next_clicks))
+        if not debug:
+            print('saving')
+            pd.DataFrame(QQ).to_csv(filename,index=False)
+    train_df[new_feature] = QQ
+    predictors.append(new_feature)
+    ## end 繰り返し
 
     train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
     predictors.append(new_feature+'_shift')
-    
     del QQ
     gc.collect()
 
@@ -349,7 +374,7 @@ def Fun():
     sub['is_attributed'] = bst.predict(test_df[predictors],num_iteration=best_iteration)
     
     print("writing...")
-    sub.to_csv(f'sub_it_{auc:012f}.csv', index=False)
+    sub.to_csv(f'sub_it_{auc:012f}_{best_iteration:09d}.csv', index=False)
 
     print("done...")
     return sub
@@ -363,7 +388,7 @@ frm=nrows-75000000 - 1000_0000*4
 to=frm+nchunk
 
 
-naddfeat=21
+naddfeat=22
 
 if '--do' in sys.argv:
   sub=DO(frm,to,0)
