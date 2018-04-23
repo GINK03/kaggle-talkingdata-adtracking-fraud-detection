@@ -117,7 +117,7 @@ def DO(frm,to,fileno):
     def add_counts(df, cols):
       arr_slice = df[cols].values
       key = "_".join(cols)+"_count"
-      if os.path(f'{key}.pkl').exists():
+      if os.path.exists(f'{key}.pkl'):
         print(f'load {key}.pkl...')
         counts = pd.read_pickle(f'{key}.pkl') 
         df[key] = counts
