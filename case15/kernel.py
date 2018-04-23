@@ -174,12 +174,14 @@ def DO(frm,to,fileno):
         filename='X%d_%d_%d.csv'%(i,frm,to)
         
         if os.path.exists(filename):
+            print(f'load {filename}...')
             if QQ==5: 
                 gp=pd.read_csv(filename,header=None)
                 train_df['X'+str(i)]=gp
             else: 
                 gp=pd.read_csv(filename)
                 train_df = train_df.merge(gp, on=selcols[0:len(selcols)-1], how='left')
+            print(f'finish to load {filename}...')
         else:
             if QQ==0:
                 gp = train_df[selcols].groupby(by=selcols[0:len(selcols)-1])[selcols[len(selcols)-1]].count().reset_index().\
@@ -242,28 +244,11 @@ def DO(frm,to,fileno):
     # end
 
     ## 繰り返し
-    new_feature = 'nextClick2'
-    filename='nextClick2_%d_%d.csv'%(frm,to)
-    if os.path.exists(filename):
-        print('loading from save file')
-        QQ=pd.read_csv(filename).values
-    else:
-        D=2**26
-        train_df['category'] = (train_df['app'].astype(str) + "_" + train_df['device'].astype(str) \
-            + "_" + train_df['os'].astype(str)).apply(hash) % D
-        click_buffer= np.full(D, 3000000000, dtype=np.uint32)
-        train_df['epochtime']= train_df['click_time'].astype(np.int64) // 10 ** 9
-        next_clicks= []
-        for category, t in zip(reversed(train_df['category'].values), reversed(train_df['epochtime'].values)):
-            next_clicks.append(click_buffer[category]-t)
-            click_buffer[category]= t
-        del(click_buffer)
-        QQ= list(reversed(next_clicks))
-        if not debug:
-            print('saving')
-            pd.DataFrame(QQ).to_csv(filename,index=False)
-    train_df[new_feature] = QQ
-    predictors.append(new_feature)
+    start = time.time()
+    df['click_time'] = (df['click_time'].astype(np.int64) // 10 ** 9).astype(np.int32)
+    df['nextClick2'] = (df.groupby(['ip', 'app', 'device', 'os']).click_time.shift(-1) - df.click_time).astype(np.float32)
+    df['prevClick2'] = (df.click_time - df.groupby(['ip', 'app', 'device', 'os']).click_time.shift(+1)).astype(np.float32)
+    print('Elapsed: {} seconds'.format(time.time() - start))
     ## end 繰り返し
 
     train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
