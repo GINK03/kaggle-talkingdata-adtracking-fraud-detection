@@ -315,7 +315,7 @@ def DO(frm,to,fileno):
     else:
       gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','channel'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_tchan_count'})
       train_df = train_df.merge(gp, on=['ip','day','channel'], how='left')
-      series  = train_df['ip_day_chl_count']
+      series  = train_df['ip_tchan_count']
       series.to_pickle('ip_day_chl_count.pkl')
       del gp
       gc.collect()
@@ -327,7 +327,7 @@ def DO(frm,to,fileno):
       train_df[ 'ip_app_os_var_hour' ] = series
       del series; gc.collect()
     else:
-      gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
+      gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var_hour'})
       train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
       series  = train_df['ip_app_os_var_hour']
       series.to_pickle('ip_app_os_var_hour.pkl')
