@@ -241,6 +241,8 @@ def DO(frm,to,fileno):
     predictors.append(new_feature)
     train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
     predictors.append(new_feature+'_shift')
+    del QQ
+    gc.collect()
     # end
 
     ## 繰り返し
@@ -251,35 +253,63 @@ def DO(frm,to,fileno):
     print('Elapsed: {} seconds'.format(time.time() - start))
     ## end 繰り返し
 
-    train_df[new_feature+'_shift'] = pd.DataFrame(QQ).shift(+1).values
-    predictors.append(new_feature+'_shift')
-    del QQ
-    gc.collect()
-
     print('grouping by ip-day-hour combination...')
-    gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_tcount'})
-    train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
-    del gp
-    gc.collect()
+    if os.path.exists('ip_tcount.pkl'):
+      print('load ip_tcount')
+      series = pd.read_pickle('ip_tcount')
+      train_df[ 'ip_tcount' ] = series
+      del series; gc.collect()
+    else:
+      gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_tcount'})
+      train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
+      series = train_df['ip_tcount']
+      series.to_pickle(f'ip_tcount.pkl')
+      del gp
+      gc.collect()
 
-    print('grouping by ip-app combination...')
-    gp = train_df[['ip', 'app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
-    train_df = train_df.merge(gp, on=['ip','app'], how='left')
-    del gp
-    gc.collect()
+    print('grouping by ip_app combination...')
+    if os.path.exists('ip_app_count.pkl'):
+      print('load ip_app_count')
+      series = pd.read_pickle('ip_app_count.pkl')
+      train_df[ 'ip_app_count' ] = series
+      del series; gc.collect()
+    else:
+      gp = train_df[['ip', 'app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
+      train_df = train_df.merge(gp, on=['ip','app'], how='left')
+      series = train_df['ip_app_count'] 
+      series.to_pickle('ip_app_count.pkl')
+      del gp
+      gc.collect()
 
-    print('grouping by ip-app-os combination...')
-    gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
-    train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
-    del gp
-    gc.collect()
+    print('grouping by ip_app_os combination...')
+    if os.path.exists('ip_app_os_count.pkl'):
+      print('load ip_app_os_count')
+      series = pd.read_pickle('ip_app_os_count.pkl')
+      train_df[ 'ip_app_os_count' ] = series
+      del series; gc.collect()
+    
+    else:
+      gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
+      train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
+      series  = train_df['ip_app_os_count']
+      series.to_pickle('ip_app_os_count.pkl')
+      del gp
+      gc.collect()
 
     # Adding features with var and mean hour (inspired from nuhsikander's script)
     print('grouping by : ip_day_chl_var_hour')
-    gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','channel'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_tchan_count'})
-    train_df = train_df.merge(gp, on=['ip','day','channel'], how='left')
-    del gp
-    gc.collect()
+    if os.path.exists('ip_day_chl_count.pkl'):
+      print('load ip_day_chl_count')
+      series = pd.read_pickle('ip_day_chl_count.pkl')
+      train_df[ 'ip_day_chl_count' ] = series
+      del series; gc.collect()
+    else:
+      gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','channel'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_tchan_count'})
+      train_df = train_df.merge(gp, on=['ip','day','channel'], how='left')
+      series  = train_df['ip_day_chl_count']
+      series.to_pickle('ip_day_chl_count.pkl')
+      del gp
+      gc.collect()
 
     print('grouping by : ip_app_os_var_hour')
     gp = train_df[['ip','app', 'os', 'hour']].groupby(by=['ip', 'app', 'os'])[['hour']].var().reset_index().rename(index=str, columns={'hour': 'ip_app_os_var'})
