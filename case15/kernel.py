@@ -265,7 +265,7 @@ def DO(frm,to,fileno):
     print('grouping by ip-day-hour combination...')
     if os.path.exists('ip_tcount.pkl'):
       print('load ip_tcount')
-      series = pd.read_pickle('ip_tcount')
+      series = pd.read_pickle('ip_tcount.pkl')
       train_df[ 'ip_tcount' ] = series
       del series; gc.collect()
     else:
