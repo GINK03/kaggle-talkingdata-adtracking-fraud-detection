@@ -116,9 +116,20 @@ def DO(frm,to,fileno):
     
     def add_counts(df, cols):
       arr_slice = df[cols].values
-      unq, unqtags, counts = np.unique(np.ravel_multi_index(arr_slice.T, arr_slice.max(axis=0)+1),
-                                     return_inverse=True, return_counts=True)
-      df["_".join(cols)+"_count"] = counts[unqtags]
+      key = "_".join(cols)+"_count"
+      if os.path(f'{key}.pkl').exists():
+        print(f'load {key}.pkl...')
+        counts = pd.read_pickle(f'{key}.pkl') 
+        df[key] = counts
+        print(f'finish load {key}.pkl... ')
+      else:
+        print(f'create {key}.pkl...')
+        unq, unqtags, counts = np.unique(np.ravel_multi_index(arr_slice.T, arr_slice.max(axis=0)+1),
+                                       return_inverse=True, return_counts=True)
+        df[key] = counts[unqtags]
+        series = df[key]
+        series.to_pickle(f'{key}.pkl')
+        print(f'finish {key} save...')
     
     # 差分
     add_counts(train_df, ['ip'])
