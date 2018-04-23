@@ -157,7 +157,7 @@ def DO(frm,to,fileno):
         if i==18: selcols=['ip', 'hour', 'os']; QQ=4; # 検証-> 18
         if i==19: selcols=['ip', 'hour', 'channel']; QQ=4; # 検証 -> 11
         if i==20: selcols=['ip', 'hour', 'app']; QQ=4; # 検証 -> 9
-        if i==21: selcols=['ip', 'app', 'hour', 'os']; QQ=4; # 検証 
+        if i==21: selcols=['ip', 'app', 'hour', 'os']; QQ=4; # 検証 -> 9
         print('selcols',selcols,'QQ',QQ)
         
         filename='X%d_%d_%d.csv'%(i,frm,to)
@@ -306,9 +306,6 @@ def DO(frm,to,fileno):
 
     print("vars and data type: ")
     train_df.info()
-    train_df['ip_tcount'] = train_df['ip_tcount'].astype('uint16')
-    train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
-    train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
     
     test_df = train_df[len_train:]
     val_df = train_df[(len_train-val_size):len_train]
@@ -342,7 +339,9 @@ def Fun():
       train_df = pd.DataFrame(np.load('files/train_df.npy'), columns=train_columns).infer_objects()
     else:
       test_df  = pd.read_pickle('files/test_df.pkl').fillna(-1.0)
+      val2_df  = train_df[-250_0000:]
       val_df   = pd.read_pickle('files/val_df.pkl').fillna(-1.0)
+      val_df   = val_df.append( val2_df )
       train_df = pd.read_pickle('files/train_df.pkl').fillna(-1.0)
 
     if '--merge' in sys.argv:
@@ -359,7 +358,7 @@ def Fun():
     #predictors.extend( ['ip_chl_ind'] )
     # regression test
     # predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
-    categorical = list(filter( lambda x: x not in ignores,  ['app', 'device', 'os', 'channel', 'hour', 'ip_chl_ind'] ) )
+    categorical = list(filter( lambda x: x not in ignores,  ['app', 'device', 'wday', 'os', 'channel', 'hour', 'ip_chl_ind'] ) )
     print('predictors',predictors)
 
     sub = pd.DataFrame()
@@ -371,14 +370,14 @@ def Fun():
       'learning_rate'   : 0.20,
       #'is_unbalance': 'true', # replaced with scale_pos_weight argument
       'num_leaves'      : 7,  # 2^max_depth - 1
-      'max_depth'       : 3,  # -1 means no limit
+      'max_depth'       : 4,  # -1 means no limit
       'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
       'max_bin'         : 100,  # Number of bucketed bin for feature values
       'subsample'       : 0.7,  # Subsample ratio of the training instance.
       'subsample_freq'  : 1,  # frequence of subsample, <=0 means no enable
-      'colsample_bytree': 0.9,  # Subsample ratio of columns when constructing each tree.
+      'colsample_bytree': 0.8,  # Subsample ratio of columns when constructing each tree.
       'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-      'scale_pos_weight': 200 # because training data is extremely unbalanced 
+      'scale_pos_weight': 99.7 # because training data is extremely unbalanced 
     }
     (bst,best_iteration, auc) = lgb_modelfit_nocv(params, 
                             train_df, 
@@ -387,9 +386,9 @@ def Fun():
                             target, 
                             objective='binary', 
                             metrics='auc',
-                            #early_stopping_rounds=30, 
+                            early_stopping_rounds=30, 
                             verbose_eval=True, 
-                            num_boost_round=250, 
+                            num_boost_round=1000, 
                             categorical_features=categorical)
 
     print('[{}]: model training time'.format(time.time() - start_time))
@@ -411,10 +410,10 @@ def Fun():
     return sub
 
 nrows=184903891-1
-nchunk=40000000 + 1000_0000*4
-val_size=2500000
+nchunk=40000000 + 1000_0000*6
+val_size=500_0000
 
-frm=nrows-75000000 - 1000_0000*4
+frm=nrows-75000000 - 1000_0000*6
 
 to=frm+nchunk
 
