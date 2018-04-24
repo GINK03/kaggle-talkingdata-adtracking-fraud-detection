@@ -19,39 +19,41 @@ print(ps)
 def pmap(arg):
   index, path = arg 
   
-  print(index, path)
-  heads = open('var/head').read().split(',')
-  
-  it = csv.reader(path.open()) 
+  try:
+    print(index, path)
+    heads = open('var/head').read().split(',')
+     
+    it = csv.reader(path.open()) 
 
-  
-  key_group_space = {}
-  for vals in it:
-    obj = dict(zip(heads, vals)) 
-    #print(obj)
-    for p in ps:
-      p = list(p)
-      group, by = p[:-1], p[-1]
-      key = '_'.join(p) + '_uniq'
-      group = '_'.join( [v for k, v in sorted(obj.items(), key=lambda x:x[0]) if k in group] )
-      val =  obj[by]
-      
-      #if random.random() < 0.00001:
-      #  print(key, group, val)
-      if key_group_space.get(key) is None:
-        key_group_space[key] = {}
-      if key_group_space[key].get(group) is None:
-        key_group_space[key][group] = set()
-      key_group_space[key][group].add( val )
+    
+    key_group_space = {}
+    for vals in it:
+      obj = dict(zip(heads, vals)) 
+      #print(obj)
+      for p in ps:
+        p = list(p)
+        group, by = p[:-1], p[-1]
+        key = '_'.join(p) + '_uniq'
+        group = '_'.join( [v for k, v in sorted(obj.items(), key=lambda x:x[0]) if k in group] )
+        val =  obj[by]
+        
+        #if random.random() < 0.00001:
+        #  print(key, group, val)
+        if key_group_space.get(key) is None:
+          key_group_space[key] = {}
+        if key_group_space[key].get(group) is None:
+          key_group_space[key][group] = set()
+        key_group_space[key][group].add( val )
 
-  for key, group_space in key_group_space.items():
-    try:
-      os.mkdir(f'var/03/{key}')
-    except:
-      ...
-    data = gzip.compress(pickle.dumps(group_space))
-    open(f'var/03/{key}/{index:09d}.pkl.gz', 'wb').write( data )
-
+    for key, group_space in key_group_space.items():
+      try:
+        os.mkdir(f'var/03/{key}')
+      except:
+        ...
+      data = gzip.compress(pickle.dumps(group_space))
+      open(f'var/03/{key}/{index:09d}.pkl.gz', 'wb').write( data )
+  except Exception as ex:
+    print(ex)
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
   #pmap(args[0])

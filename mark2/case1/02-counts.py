@@ -14,42 +14,46 @@ import sys
 
 import os
 
-ps =  sum( [list(itertools.combinations( ['ip','app','device','os','channel', 'wday', 'hour'], i ) ) for i in range(2,6)], [])
+ps =  sum( [list(itertools.combinations( ['ip','app','device','os','channel', 'wday', 'hour'], i ) ) for i in range(2,4)], [])
 print(ps)
 
 def pmap(arg):
   index, path = arg 
-  
-  print(index, path)
-  if Path(f'var/02/{index:09d}.pkl.gz').exists():
-    print(f'already processed {index:09d}')
-    return
-  heads = open('var/head').read().split(',')
-  it = csv.reader(path.open()) 
+ 
+  try:
+    print(index, path)
+    if Path(f'var/02/{index:09d}.pkl.gz').exists():
+      print(f'already processed {index:09d}')
+      return
+    heads = open('var/head').read().split(',')
+    it = csv.reader(path.open()) 
 
-  key_val_freq = {}
+    key_val_freq = {}
 
-  for vals in it:
-    obj = dict(zip(heads, vals)) 
-    #print(obj)
-    for p in ps:
-      p = sorted(list(p))
-      key = '_'.join(p)
-      val = '_'.join([ v for k, v in sorted(obj.items(), key=lambda x:x[0]) if k in p ])
-      if key_val_freq.get(key) is None:
-        key_val_freq[key] = {}
-      if key_val_freq[key].get(val) is None:
-        key_val_freq[key][val] = 0
-      key_val_freq[key][val] += 1
+    for i, vals in enumerate(it):
+      if i%10000 == 0:
+        print(f'now {i} @ {index} {path}')
+      obj = dict(zip(heads, vals)) 
+      #print(obj)
+      for p in ps:
+        p = sorted(list(p))
+        key = '_'.join(p)
+        val = '_'.join([ v for k, v in sorted(obj.items(), key=lambda x:x[0]) if k in p ])
+        if key_val_freq.get(key) is None:
+          key_val_freq[key] = {}
+        if key_val_freq[key].get(val) is None:
+          key_val_freq[key][val] = 0
+        key_val_freq[key][val] += 1
 
-  for key, val_freq in key_val_freq.items():
-    try:
-      os.mkdir(f'var/02/{key}')
-    except:
-      ...
-    data = gzip.compress(pickle.dumps(val_freq))
-    open(f'var/02/{key}/{key}_{index:09d}.pkl.gz', 'wb').write( data )
-
+    for key, val_freq in key_val_freq.items():
+      try:
+        os.mkdir(f'var/02/{key}')
+      except:
+        ...
+      data = gzip.compress(pickle.dumps(val_freq))
+      open(f'var/02/{key}/{key}_{index:09d}.pkl.gz', 'wb').write( data )
+  except Exception as ex:
+    print(ex)
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
   #pmap(args[0])
