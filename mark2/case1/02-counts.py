@@ -56,7 +56,7 @@ if '2' in sys.argv:
     except Exception as ex:
       print(index, ex)
       continue
-    print(path)
+    print(index, path)
     for key, val_freq in _key_val_freq.items():
       if key_val_freq.get(key) is None:
         key_val_freq[key] = {}
