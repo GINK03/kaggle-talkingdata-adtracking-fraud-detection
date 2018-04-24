@@ -12,6 +12,8 @@ import pickle, gzip
 import sys
 
 import random
+
+import os
 ps =  sum( [list(itertools.permutations( ['ip','app','device','os','channel'], i ) ) for i in range(3,4)], [])
 print(ps)
 def pmap(arg):
@@ -41,8 +43,14 @@ def pmap(arg):
       if key_group_space[key].get(group) is None:
         key_group_space[key][group] = set()
       key_group_space[key][group].add( val )
-  data = gzip.compress(pickle.dumps(key_group_space))
-  open(f'var/03/{index:09d}.pkl.gz', 'wb').write( data )
+
+  for key, group_space in key_group_space.items():
+    try:
+      os.mkdir(f'var/03/{key}')
+    except:
+      ...
+    data = gzip.compress(pickle.dumps(group_space))
+    open(f'var/03/{key}/{index:09d}.pkl.gz', 'wb').write( data )
 
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]

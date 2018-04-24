@@ -12,6 +12,8 @@ import pickle, gzip
 
 import sys
 
+import os
+
 ps =  sum( [list(itertools.combinations( ['ip','app','device','os','channel', 'wday', 'hour'], i ) ) for i in range(2,6)], [])
 print(ps)
 
@@ -39,8 +41,14 @@ def pmap(arg):
       if key_val_freq[key].get(val) is None:
         key_val_freq[key][val] = 0
       key_val_freq[key][val] += 1
-  data = gzip.compress(pickle.dumps(key_val_freq))
-  open(f'var/02/{index:09d}.pkl.gz', 'wb').write( data )
+
+  for key, val_freq in key_val_freq.items():
+    try:
+      os.mkdir(f'var/02/{key}')
+    except:
+      ...
+    data = gzip.compress(pickle.dumps(val_freq))
+    open(f'var/02/{key}/{key}_{index:09d}.pkl.gz', 'wb').write( data )
 
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
