@@ -143,6 +143,7 @@ def DO(frm,to,fileno):
     add_counts(train_df, ['ip', 'wday', 'hour'])
     add_counts(train_df, ['ip', 'os', 'wday', 'hour'])
     add_counts(train_df, ['ip', 'app', 'wday', 'hour'])
+    add_counts(train_df, ['ip', 'app', 'device',  'wday', 'hour'])
     add_counts(train_df, ['ip', 'device', 'wday', 'hour'])
     add_counts(train_df, ['ip', 'app', 'os'])
     add_counts(train_df, ['wday', 'hour', 'app'])
@@ -395,12 +396,12 @@ def Fun():
 
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
     #ignores.extend( ['x1', 'x7', 'x4', 'day', 'nextClick_shift', 'factrize'] )
-    ignores.extend( ['ip_chl_ind'] )
+    ignores.extend( ['ip_chl_ind', 'channel', 'app'] )
     predictors = [ p for p in train_columns if p not in ignores ]
     #predictors.extend( ['ip_chl_ind'] )
     # regression test
     # predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
-    categorical = list(filter( lambda x: x not in ignores,  ['app', 'device', 'wday', 'os', 'channel', 'hour', 'ip_chl_ind'] ) )
+    categorical = list(filter( lambda x: x not in ignores,  [ 'device', 'wday', 'os', 'hour', 'ip_chl_ind'] ) )
     print('predictors',predictors)
 
     sub = pd.DataFrame()
@@ -409,7 +410,7 @@ def Fun():
     print("Training...")
     start_time = time.time()
     params = {
-      'learning_rate'   : 0.20,
+      'learning_rate'   : 0.10,
       #'is_unbalance': 'true', # replaced with scale_pos_weight argument
       'num_leaves'      : 7,  # 2^max_depth - 1
       'max_depth'       : 4,  # -1 means no limit
@@ -417,7 +418,7 @@ def Fun():
       'max_bin'         : 100,  # Number of bucketed bin for feature values
       'subsample'       : 0.7,  # Subsample ratio of the training instance.
       'subsample_freq'  : 1,  # frequence of subsample, <=0 means no enable
-      'colsample_bytree': 0.8,  # Subsample ratio of columns when constructing each tree.
+      'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
       'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
       'scale_pos_weight': 99.7 # because training data is extremely unbalanced 
     }
@@ -452,10 +453,10 @@ def Fun():
     return sub
 
 nrows=184903891-1
-nchunk=40000000 + 1000_0000*6
+nchunk=40000000 + 1000_0000*10
 val_size=500_0000
 
-frm=nrows-75000000 - 1000_0000*6
+frm=nrows-75000000 - 1000_0000*10
 
 to=frm+nchunk
 
