@@ -50,8 +50,12 @@ if '1' in sys.argv:
 
 if '2' in sys.argv:
   key_val_freq = {}
-  for path in Path('var/02/').glob('*'):
-    _key_val_freq = pickle.loads( gzip.decompress(path.open('rb').read()) )
+  for index, path in enumerate(Path('var/02/').glob('*')):
+    try:
+      _key_val_freq = pickle.loads( gzip.decompress(path.open('rb').read()) )
+    except Exception as ex:
+      print(index, ex)
+      continue
     print(path)
     for key, val_freq in _key_val_freq.items():
       if key_val_freq.get(key) is None:

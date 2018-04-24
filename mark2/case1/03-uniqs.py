@@ -12,7 +12,7 @@ import pickle, gzip
 import sys
 
 import random
-ps =  sum( [list(itertools.permutations( ['ip','app','device','os','channel'], i ) ) for i in range(2,5)], [])
+ps =  sum( [list(itertools.permutations( ['ip','app','device','os','channel'], i ) ) for i in range(3,4)], [])
 print(ps)
 def pmap(arg):
   index, path = arg 
@@ -44,7 +44,8 @@ def pmap(arg):
   data = gzip.compress(pickle.dumps(key_group_space))
   open(f'var/03/{index:09d}.pkl.gz', 'wb').write( data )
 
-args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
-#pmap(args[0])
-with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
-  exe.map(pmap, args)
+if '1' in sys.argv:
+  args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
+  #pmap(args[0])
+  with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
+    exe.map(pmap, args)
