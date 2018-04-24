@@ -20,7 +20,7 @@ def pmap(arg):
   
   print(index, path)
   if Path(f'var/02/{index:09d}.pkl.gz').exists():
-    print('already processed {index:09d}')
+    print(f'already processed {index:09d}')
     return
   heads = open('var/head').read().split(',')
   it = csv.reader(path.open()) 
