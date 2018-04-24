@@ -90,3 +90,7 @@ epoch timeを追加
 
 ### 'device', 'app', 'os'を追加
 
+#　mark 2
+## map reduceを採用
+
+
