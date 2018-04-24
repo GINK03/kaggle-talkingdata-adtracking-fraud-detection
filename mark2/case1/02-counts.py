@@ -9,7 +9,7 @@ import csv
 import itertools
 
 import pickle, gzip
-ps =  sum( [list(itertools.combinations( ['ip','app','device','os','channel'], i ) ) for i in range(2,5)], [])
+ps =  sum( [list(itertools.combinations( ['ip','app','device','os','channel', 'wday', 'hour'], i ) ) for i in range(2,6)], [])
 print(ps)
 
 def pmap(arg):
