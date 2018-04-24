@@ -395,13 +395,13 @@ def Fun():
     target = 'is_attributed'
 
     ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
-    #ignores.extend( ['x1', 'x7', 'x4', 'day', 'nextClick_shift', 'factrize'] )
-    ignores.extend( ['ip_chl_ind', 'channel', 'app'] )
+    # ignores.extend( ['x1', 'x7', 'x4', 'day', 'nextClick_shift', 'factrize'] )
+    ignores.extend( ['ip_chl_ind', 'os', 'app'] )
     predictors = [ p for p in train_columns if p not in ignores ]
-    #predictors.extend( ['ip_chl_ind'] )
+    # predictors.extend( ['ip_chl_ind'] )
     # regression test
     # predictors.extend( ['app_chl_conf', 'os_chl_conf' ] )
-    categorical = list(filter( lambda x: x not in ignores,  [ 'device', 'wday', 'os', 'hour', 'ip_chl_ind'] ) )
+    categorical = list(filter( lambda x: x not in ignores,  ['device', 'os', 'app',  'wday', 'hour', 'ip_chl_ind'] ) )
     print('predictors',predictors)
 
     sub = pd.DataFrame()
@@ -410,8 +410,8 @@ def Fun():
     print("Training...")
     start_time = time.time()
     params = {
-      'learning_rate'   : 0.10,
-      #'is_unbalance': 'true', # replaced with scale_pos_weight argument
+      'learning_rate'   : 0.20,
+      # 'is_unbalance': 'true', # replaced with scale_pos_weight argument
       'num_leaves'      : 7,  # 2^max_depth - 1
       'max_depth'       : 4,  # -1 means no limit
       'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
@@ -453,10 +453,10 @@ def Fun():
     return sub
 
 nrows=184903891-1
-nchunk=40000000 + 1000_0000*10
+nchunk=40000000 + 1000_0000*3
 val_size=500_0000
 
-frm=nrows-75000000 - 1000_0000*10
+frm=nrows-75000000 - 1000_0000*3
 
 to=frm+nchunk
 
