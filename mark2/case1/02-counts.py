@@ -19,12 +19,14 @@ def pmap(arg):
   index, path = arg 
   
   print(index, path)
+  if Path(f'var/02/{index:09d}.pkl.gz').exists():
+    print('already processed {index:09d}')
+    return
   heads = open('var/head').read().split(',')
-  
   it = csv.reader(path.open()) 
 
-  
   key_val_freq = {}
+
   for vals in it:
     obj = dict(zip(heads, vals)) 
     #print(obj)
@@ -58,3 +60,5 @@ if '2' in sys.argv:
         if key_val_freq[key].get(val) is None:
           key_val_freq[key][val] = 0
         key_val_freq[key][val] += freq
+  data = gzip.compress(pickle.dumps(key_val_freq))
+  open(f'var/02_all.pkl.gz', 'wb').write( data )
