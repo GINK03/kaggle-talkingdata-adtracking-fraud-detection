@@ -15,7 +15,8 @@ for name in Path('./var/02').glob('*'):
 
 import concurrent.futures
 
-
+import random
+random.shuffle(keys)
 def pmap(key):
   print(key)
   p_freq = {}
@@ -29,5 +30,5 @@ def pmap(key):
   d = gzip.compress(pickle.dumps(p_freq))
   open(f'var/{key}_count_all.pkl.gz', 'wb').write( d )
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
+with concurrent.futures.ProcessPoolExecutor(max_workers=4) as exe:
   exe.map(pmap, keys)
