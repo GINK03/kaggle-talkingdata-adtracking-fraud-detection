@@ -21,10 +21,11 @@ def pmap(arg):
   
   try:
     print(index, path)
+    if os.path.exists(f'var/03/{index:09d}_proceed'):
+      return
     heads = open('var/head').read().split(',')
      
     it = csv.reader(path.open()) 
-
     
     key_group_space = {}
     for vals in it:
@@ -52,10 +53,15 @@ def pmap(arg):
         ...
       data = gzip.compress(pickle.dumps(group_space))
       open(f'var/03/{key}/{index:09d}.pkl.gz', 'wb').write( data )
+    Path(f'var/03/{index:09d}_proceed').open('w').write( 'finish' )
   except Exception as ex:
     print(ex)
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
   #pmap(args[0])
-  with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
+
+  th = 16
+  if 'th4' in sys.argv:
+    th = 4
+  with concurrent.futures.ProcessPoolExecutor(max_workers=4) as exe:
     exe.map(pmap, args)

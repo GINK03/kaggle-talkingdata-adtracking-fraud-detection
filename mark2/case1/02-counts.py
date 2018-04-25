@@ -14,6 +14,8 @@ import sys
 
 import os
 
+import random
+
 ps =  sum( [list(itertools.combinations( ['ip','app','device','os','channel', 'wday', 'hour'], i ) ) for i in range(2,4)], [])
 print(ps)
 
@@ -22,7 +24,7 @@ def pmap(arg):
  
   try:
     print(index, path)
-    if Path(f'var/02/{index:09d}.pkl.gz').exists():
+    if Path(f'var/02/{index:09d}_proceed').exists():
       print(f'already processed {index:09d}')
       return
     heads = open('var/head').read().split(',')
@@ -52,10 +54,14 @@ def pmap(arg):
         ...
       data = gzip.compress(pickle.dumps(val_freq))
       open(f'var/02/{key}/{key}_{index:09d}.pkl.gz', 'wb').write( data )
+
+    # flagを書き込んで終了
+    Path(f'var/02/{index:09d}_proceed').open('w').write( 'finish' )
   except Exception as ex:
     print(ex)
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
+  random.shuffle(args)
   #pmap(args[0])
   with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
     exe.map(pmap, args)

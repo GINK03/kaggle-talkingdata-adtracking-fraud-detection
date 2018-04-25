@@ -7,7 +7,9 @@ import os
 keys = []
 for name in Path('./var/02').glob('*'):
   key = str(name).split('/').pop()
-  if os.path.exists(f'var/{key}_all.pkl.gz'):
+  if 'proceed' in key:
+    continue
+  if os.path.exists(f'var/{key}_count_all.pkl.gz'):
     continue
   keys.append( key )
 
@@ -25,7 +27,7 @@ def pmap(key):
         p_freq[p] = 0
       p_freq[p] += freq
   d = gzip.compress(pickle.dumps(p_freq))
-  open(f'var/{key}_all.pkl.gz', 'wb').write( d )
+  open(f'var/{key}_count_all.pkl.gz', 'wb').write( d )
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=16) as exe:
   exe.map(pmap, keys)
