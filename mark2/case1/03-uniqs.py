@@ -58,10 +58,13 @@ def pmap(arg):
     print(ex)
 if '1' in sys.argv:
   args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
+  random.shuffle(args)
   #pmap(args[0])
 
   th = 16
   if 'th4' in sys.argv:
     th = 4
-  with concurrent.futures.ProcessPoolExecutor(max_workers=4) as exe:
+  if 'th2' in sys.argv:
+    th = 2
+  with concurrent.futures.ProcessPoolExecutor(max_workers=th) as exe:
     exe.map(pmap, args)
