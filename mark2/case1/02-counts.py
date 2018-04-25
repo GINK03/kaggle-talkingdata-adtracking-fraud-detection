@@ -35,6 +35,9 @@ def pmap(arg):
     for i, vals in enumerate(it):
       if i%10000 == 0:
         print(f'now {i} @ {index} {path}')
+        if Path(f'var/02/{index:09d}_proceed').exists():
+          print(f'injection happen, processed {index:09d}')
+          return
       obj = dict(zip(heads, vals)) 
       #print(obj)
       for p in ps:
