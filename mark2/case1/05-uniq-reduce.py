@@ -4,14 +4,15 @@ from pathlib import Path
 import gzip, pickle
 
 import os
+
+import concurrent.futures
+
 keys = []
 for name in Path('./var/03').glob('*'):
   key = str(name).split('/').pop()
   if os.path.exists(f'var/{key}_all.pkl.gz'):
     continue
   keys.append( key )
-
-import concurrent.futures
 
 def pmap(key):
   print(key)
