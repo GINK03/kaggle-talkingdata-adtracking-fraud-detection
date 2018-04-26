@@ -2,8 +2,6 @@ import datetime
 import itertools
 import sys
 fp = open('../../input/train.csv')
-
-
 key_fp = {}
 
 head = next(fp).strip()
