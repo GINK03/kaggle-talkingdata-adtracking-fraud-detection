@@ -71,10 +71,10 @@ if '1' in sys.argv:
   target = 'is_attributed'
   ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
   
-  df = pd.read_csv('var/train.csv', skiprows=range(1, 1400_0000), nrows=4000_0000) #skiprows=range(1,17000_0000) )
+  df = pd.read_csv('var/train.csv', skiprows=range(1, 10000_0000)) #skiprows=range(1,17000_0000) )
   df = df.drop(['click_time', 'attributed_time'], axis=1)  
-  dfv = df[-500_0000:]
-  df = df[:-500_0000]
+  dfv = df[-250_0000:]
+  df = df[:-250_0000]
 
   print(df.info())
   columns =  df.columns.tolist()
