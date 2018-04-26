@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 import itertools
-
+import os
 print('loading dataset')
 dft = pd.read_csv('../../input/train.csv', parse_dates=['click_time'])
 dfT = pd.read_csv('../../input/test.csv', parse_dates=['click_time'])
@@ -14,8 +14,11 @@ dft.reset_index()
 print(len(dft))
 print('finish loading')
 #sys.exit()
-for fact in [ itertools.combinations( ['ip', 'os', 'app', 'device'], i )  for i in range(2,4) ] : 
+for fact in reversed( [ itertools.combinations( ['ip', 'os', 'app', 'device'], i )  for i in range(2,5) ] ): 
   for factN in fact:
+    save_key = 'var/' + '_'.join(factN) + '_nextclick.csv'
+    if os.path.exists(save_key):
+      continue
     print('slicing now.')
     df = dft[ ['click_time', 'ip', 'os', 'app', 'device'] ]
     print('df len', len(df))
@@ -28,12 +31,11 @@ for fact in [ itertools.combinations( ['ip', 'os', 'app', 'device'], i )  for i 
     df[key] = (df.groupby(factN).click_time.shift(-1) - df.click_time).astype(np.float32)
   
     df['control_index'] = df.index
-    df = df[['control_index', key]] 
+    series = df[ key ] 
     gc.collect()
     print('calculate delta time was done.')
 
     print('dump to csv now.')
-    save_key = 'var/' + '_'.join(factN) + '_nextclick.csv'
-    df.to_csv(save_key, index=False)
+    series.to_csv(save_key, index=False, header=None)
     print('dump to csv was done.')
-    del df; gc.collect()
+    del df; del series; gc.collect()
