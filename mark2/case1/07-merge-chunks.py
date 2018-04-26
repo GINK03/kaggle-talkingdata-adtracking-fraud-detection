@@ -13,7 +13,7 @@ head = open('var/head').read() + ',' + apps
 
 fp = open('var/train.csv', 'w')
 fp.write( head + '\n' )
-for name in sorted( filter(lambda x:'test_' not in x, glob.glob('var/chunks/*_finish')) ):
+for name in sorted( filter(lambda x:'test_' not in x, glob.glob('var/chunks/*_finished')) ):
   print(name)
 
   for line in open(name):
