@@ -27,7 +27,10 @@ def pmap(arg):
     if Path(f'var/02/{index:09d}_proceed').exists():
       print(f'already processed {index:09d}')
       return
-    heads = open('var/head').read().split(',')
+    if 'test_test_' in str(path):
+      heads = open('var/head_test').read().split(',')
+    else:
+      heads = open('var/head').read().split(',')
     it = csv.reader(path.open()) 
 
     key_val_freq = {}

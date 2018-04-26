@@ -27,6 +27,9 @@ def pmap(key):
       if p_freq.get(p) is None:
         p_freq[p] = 0
       p_freq[p] += freq
+    # すでにファイルがあったら終了
+    if os.path.exists(f'var/{key}_count_all.pkl.gz'):
+      return 
   d = gzip.compress(pickle.dumps(p_freq))
   open(f'var/{key}_count_all.pkl.gz', 'wb').write( d )
 
