@@ -10,8 +10,8 @@ import os
 import concurrent.futures
 
 print('loading dataset')
-dft = pd.read_csv('../../input/train.csv', parse_dates=['click_time'])
-dfT = pd.read_csv('../../input/test.csv', parse_dates=['click_time'])
+dft = pd.read_csv('var/train.csv', parse_dates=['click_time'])
+dfT = pd.read_csv('var/test.csv', parse_dates=['click_time'])
 dft = dft.append(dfT)
 dft.reset_index()
 print(len(dft))
@@ -48,5 +48,5 @@ for fact in reversed( [ itertools.combinations( ['ip', 'os', 'app', 'device'], i
   for factN in fact:
     args.append(factN)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=4) as exe:
+with concurrent.futures.ProcessPoolExecutor(max_workers=2) as exe:
   exe.map(pmap, args)
