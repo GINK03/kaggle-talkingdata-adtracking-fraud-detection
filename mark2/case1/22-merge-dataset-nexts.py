@@ -32,7 +32,6 @@ if '1-1' in sys.argv:
       cindex_val[cindex] = ','.join( obj.values() )
     data = pickle.dumps(cindex_val)
     open('var/all_nextclick_cindex_val.pkl', 'wb').write( data )
-
   cindex_val = pickle.load( open('var/all_nextclick_cindex_val.pkl', 'rb') )
   f = open('var/train.csv')
   ft = open('var/train_nexts.csv', 'w')
@@ -52,7 +51,7 @@ if '1-1' in sys.argv:
 
   f = open('var/test.csv')
   ft = open('var/test_nexts.csv', 'w')
-  head = next(f).strip() + ',' + next(f).strip()
+  head = next(f).strip() + ',' + next( open('var/all_nextclick.csv') ).strip()
   ft.write( head + '\n' )
   for index, line in enumerate(f):
     if index%10000 == 0:
