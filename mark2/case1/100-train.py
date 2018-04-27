@@ -69,15 +69,15 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 
 if '1' in sys.argv:
   target = 'is_attributed'
-  ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
   
-  df = pd.read_csv('var/train.csv', skiprows=range(1, 10000_0000)) #skiprows=range(1,17000_0000) )
+  df = pd.read_csv('var/train_nexts.csv', skiprows=range(1, 10000_0000)) #skiprows=range(1,17000_0000) )
   df = df.drop(['click_time', 'attributed_time'], axis=1)  
   dfv = df[-250_0000:]
   df = df[:-250_0000]
 
   print(df.info())
   columns =  df.columns.tolist()
+  ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
   predictors = [ p for p in columns if p not in ignores ]
   print('columns', columns )
   print('predictors', predictors)
@@ -111,3 +111,21 @@ if '1' in sys.argv:
   now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
   bst.save_model(f'files/model_auc={auc:012f}_time={now}.txt')
 
+if '2' in sys.argv:
+  dft = pd.read_csv('var/test_nexts.csv')
+  
+  print(dft.info())
+  columns =  dft.columns.tolist()
+  ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
+  predictors = [ p for p in columns if p not in ignores ]
+  print('columns', columns )
+  print('predictors', predictors)
+  categorical = list(filter( lambda x: x not in ignores,  ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] ) )
+  print('categorical', categorical)
+  
+  bst = lgb.Booster(model_file='files/model_auc=00000.990751_time=2018-04-27 04:35:22.txt')
+  sub = pd.DataFrame()
+  sub['click_id'] = dft['click_id'].astype('int')
+  sub['is_attributed'] = bst.predict(dft[predictors],num_iteration=bst.best_iteration)
+  
+  sub.to_csv(f'sub_it.csv', index=False)

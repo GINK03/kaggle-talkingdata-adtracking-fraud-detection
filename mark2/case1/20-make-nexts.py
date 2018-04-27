@@ -6,13 +6,15 @@ import numpy as np
 
 import itertools
 import os
-
+import gc
 import concurrent.futures
 
 print('loading dataset')
-dft = pd.read_csv('var/train.csv', parse_dates=['click_time'])
-dfT = pd.read_csv('var/test.csv', parse_dates=['click_time'])
+dft = pd.read_csv('../../input/train.csv', parse_dates=['click_time'])
+dfT = pd.read_csv('../../input/test.csv', parse_dates=['click_time'])
 dft = dft.append(dfT)
+dft = dft[ ['click_time', 'ip', 'os', 'app', 'device'] ]
+gc.collect()
 dft.reset_index()
 print(len(dft))
 print('finish loading')
@@ -33,7 +35,6 @@ def pmap(arg):
   df['click_time'] = (df['click_time'].astype(np.int64) // 10 ** 9).astype(np.int32)
   df[key] = (df.groupby(factN).click_time.shift(-1) - df.click_time).astype(np.float32)
 
-  df['control_index'] = df.index
   series = df[ key ] 
   gc.collect()
   print('calculate delta time was done.')
@@ -47,6 +48,5 @@ args = []
 for fact in reversed( [ itertools.combinations( ['ip', 'os', 'app', 'device'], i )  for i in range(2,5) ] ): 
   for factN in fact:
     args.append(factN)
-
 with concurrent.futures.ProcessPoolExecutor(max_workers=2) as exe:
   exe.map(pmap, args)
