@@ -7,9 +7,9 @@ import glob
 
 import sys
 # ヘッダー作成
-apps = [x.replace('.pkl.gz', '') for x in sorted(glob.glob('var/*.pkl.gz'))]
+apps = [x.replace('.pkl.gz', '') for x in sum([sorted(glob.glob('var/*_count_all.pkl.gz')), sorted(glob.glob('var/*_uniq_uniq_all.pkl.gz'))], [])]
 apps = ','.join(apps)
-
+print(apps)
 if 'train' in sys.argv:
   head = open('var/head').read() + ',' + apps
   fp = open('var/train.csv', 'w')

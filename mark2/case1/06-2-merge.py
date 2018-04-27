@@ -72,5 +72,5 @@ random.shuffle(init_names)
 
 #[ pmap(x) for x in init_names ] 
 import concurrent.futures
-with concurrent.futures.ProcessPoolExecutors(max_workers=6) as exe:
+with concurrent.futures.ProcessPoolExecutor(max_workers=12) as exe:
   exe.map( pmap, init_names )
