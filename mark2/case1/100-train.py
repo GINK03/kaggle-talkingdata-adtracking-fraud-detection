@@ -112,7 +112,7 @@ if '1' in sys.argv:
   bst.save_model(f'files/model_auc={auc:012f}_time={now}.txt')
 
 if '2' in sys.argv:
-  dft = pd.read_csv('var/test.csv')
+  dft = pd.read_csv('var/test_nexts.csv')
   
   print(dft.info())
   columns =  dft.columns.tolist()
@@ -123,7 +123,7 @@ if '2' in sys.argv:
   categorical = list(filter( lambda x: x not in ignores,  ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] ) )
   print('categorical', categorical)
   
-  bst = lgb.Booster(model_file='files/model_auc=00000.978603_time=2018-04-26 19:06:56.txt')
+  bst = lgb.Booster(model_file='files/model_auc=00000.990751_time=2018-04-27 04:35:22.txt')
   sub = pd.DataFrame()
   sub['click_id'] = dft['click_id'].astype('int')
   sub['is_attributed'] = bst.predict(dft[predictors],num_iteration=bst.best_iteration)
