@@ -1,6 +1,9 @@
 
 import pandas as pd
 import sys
+import csv
+import pickle
+import os
 
 if '1' in sys.argv:
   dfn = pd.read_csv('var/all_nextclick.csv')
@@ -17,12 +20,8 @@ if '2' in sys.argv:
   df.to_csv('var/train_nexts.csv')
 
 if '1-1' in sys.argv:
-  
-  import csv
-  import pickle
-  import os
-
   if not os.path.exists('var/all_nextclick_cindex_val.pkl'):
+    print('create hashmap index')
     cindex_val = {}
     f = open('var/all_nextclick.csv')
     for ind, obj in enumerate(csv.DictReader(f)):
@@ -32,6 +31,7 @@ if '1-1' in sys.argv:
       cindex_val[cindex] = ','.join( obj.values() )
     data = pickle.dumps(cindex_val)
     open('var/all_nextclick_cindex_val.pkl', 'wb').write( data )
+
   cindex_val = pickle.load( open('var/all_nextclick_cindex_val.pkl', 'rb') )
   f = open('var/train.csv')
   ft = open('var/train_nexts.csv', 'w')
