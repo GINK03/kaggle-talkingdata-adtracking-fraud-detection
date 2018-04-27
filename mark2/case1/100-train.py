@@ -70,10 +70,12 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 if '1' in sys.argv:
   target = 'is_attributed'
   
-  df = pd.read_csv('var/train_nexts.csv', skiprows=range(1, 10000_0000)) #skiprows=range(1,17000_0000) )
+  df = pd.read_csv('var/train_nexts.csv', skiprows=range(1, 8000_0000)) #skiprows=range(1,17000_0000) )
+  #import paratext
+  #df = paratext.load_csv_to_pandas('var/data.csv')
   df = df.drop(['click_time', 'attributed_time'], axis=1)  
-  dfv = df[-250_0000:]
-  df = df[:-250_0000]
+  dfv = df[:500_0000]
+  df = df[500_0000:]
 
   print(df.info())
   columns =  df.columns.tolist()
@@ -87,14 +89,14 @@ if '1' in sys.argv:
     'learning_rate'   : 0.20,
     # 'is_unbalance': 'true', # replaced with scale_pos_weight argument
     'num_leaves'      : 7,  # 2^max_depth - 1
-    'max_depth'       : 4,  # -1 means no limit
+    'max_depth'       : 3,  # -1 means no limit
     'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
     'max_bin'         : 100,  # Number of bucketed bin for feature values
     'subsample'       : 0.7,  # Subsample ratio of the training instance.
     'subsample_freq'  : 1,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
+    'colsample_bytree': 0.6,  # Subsample ratio of columns when constructing each tree.
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-    'scale_pos_weight': 99.7 # because training data is extremely unbalanced 
+    'scale_pos_weight': 300 # because training data is extremely unbalanced 
   }
   (bst,best_iteration, auc) = lgb_modelfit_nocv(params, 
                             df, 
