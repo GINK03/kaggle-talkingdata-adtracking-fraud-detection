@@ -14,16 +14,29 @@ size = len(paths)
 
 pkls = sorted(glob.glob('var/*_count_all.pkl.gz'))
 pkls_size = len(pkls)
-
 keys_keyval = []
+#  count allの方
 for name_index, name in enumerate(pkls):
   print(name_index, '@', pkls_size, name)
   key = str(name).split('/').pop().replace('_count_all.pkl.gz', '')
   print(key)
   key_val = pickle.loads( gzip.decompress(open(name, 'rb').read()) )
   keys = sorted(key.split('_'))
-  keys_keyval.append( (keys, key_val) ) 
+  keys_keyval.append( ('count', keys, key_val) ) 
 
+# uniqの方
+pkls = sorted(glob.glob('var/*_uniq_uniq_all.pkl.gz'))
+pkls_size = len(pkls)
+for name_index, name in enumerate(pkls):
+  print(name_index, '@', pkls_size, name)
+  key = str(name).split('/').pop().replace('_uniq_uniq_all.pkl.gz', '')
+  print(key)
+  key_val = pickle.loads( gzip.decompress(open(name, 'rb').read()) )
+  # 最後はgroup byなのでtrim
+  keys = sorted(key.split('_')[:-1])
+  print(keys)
+  keys_keyval.append( ('uniq', keys, key_val) ) 
+  
 def pmap(init_name):
   if os.path.exists(f'{init_name}_finished'):
     return
@@ -45,7 +58,7 @@ def pmap(init_name):
     vals    = line.strip().split(',') 
     text    = line.strip()
     obj     = dict(zip(heads,vals))
-    for keys, key_val in keys_keyval:
+    for mode, keys, key_val in keys_keyval:
       minikey = [v for k, v in sorted(obj.items(), key=lambda x:x[0]) if k in keys ]  
       minikey = '_'.join( minikey )
       val = key_val[ minikey ]  if key_val.get(minikey) else '0'
@@ -57,4 +70,7 @@ import random
 init_names = list(filter(lambda x: 'finish' not in x, glob.glob('var/chunks/*') ) )
 random.shuffle(init_names)
 
-[ pmap(x) for x in init_names ] 
+#[ pmap(x) for x in init_names ] 
+import concurrent.futures
+with concurrent.futures.ProcessPoolExecutors(max_workers=6) as exe:
+  exe.map( pmap, init_names )

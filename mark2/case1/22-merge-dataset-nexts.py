@@ -38,7 +38,9 @@ if '1-1' in sys.argv:
   ft = open('var/train_nexts.csv', 'w')
   head = next(f).strip() + ',' + next( open('var/all_nextclick.csv') ).strip()
   ft.write( head + '\n' )
-  for line in f:
+  for index, line in enumerate(f):
+    if index%10000 == 0:
+      print(f'now train {index}')
     line = line.strip()
     try: 
       cindex = int( line.split(',').pop(0) )
@@ -52,7 +54,9 @@ if '1-1' in sys.argv:
   ft = open('var/test_nexts.csv', 'w')
   head = next(f).strip() + ',' + next(f).strip()
   ft.write( head + '\n' )
-  for line in f:
+  for index, line in enumerate(f):
+    if index%10000 == 0:
+      print(f'now train {index}')
     line = line.strip()
     try: 
       cindex = int( line.split(',').pop(0) )

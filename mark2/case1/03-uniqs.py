@@ -15,6 +15,7 @@ import random
 
 import os
 ps =  sum( [list(itertools.permutations( ['ip','app','device','os','channel'], i ) ) for i in range(3,4)], [])
+ps = [sorted(p) for p in ps]
 print(ps)
 def pmap(arg):
   index, path = arg 
@@ -57,7 +58,8 @@ def pmap(arg):
   except Exception as ex:
     print(ex)
 if '1' in sys.argv:
-  args = [(index, path) for index, path in enumerate(sorted(Path('var/chunks/').glob('*')))]
+  import glob
+  args = [(index, Path(path)) for index, path in enumerate(sorted(filter(lambda x:'finished' not in x , glob.glob('var/chunks/*'))))]
   random.shuffle(args)
   #pmap(args[0])
 
