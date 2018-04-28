@@ -70,31 +70,32 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 if '1' in sys.argv:
   target = 'is_attributed'
   
-  df = pd.read_csv('var/train_nexts.csv', skiprows=range(1, 8000_0000)) #skiprows=range(1,17000_0000) )
-  #import paratext
-  #df = paratext.load_csv_to_pandas('var/data.csv')
-  df = df.drop(['click_time', 'attributed_time'], axis=1)  
-  dfv = df[:500_0000]
-  df = df[500_0000:]
+  df = pd.read_csv('var/train_nexts.csv', skiprows=range(1, 8000_0000))# skiprows=range(1, 8000_0000)) #skiprows=range(1,17000_0000) )
+
+  df = df.drop(['ip', 'click_time', 'attributed_time'], axis=1)  
+  columns =  df.columns.tolist()
+  #dfv1 = df[:250_0000]
+  dfv = df[-250_0000:]
+  df  = df[:-250_0000]
 
   print(df.info())
-  columns =  df.columns.tolist()
-  ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
-  predictors = [ p for p in columns if p not in ignores ]
-  print('columns', columns )
+  predictors = columns
   print('predictors', predictors)
-  categorical = list(filter( lambda x: x not in ignores,  ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] ) )
+  categorical = ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] 
   print('categorical', categorical)
+  print('columns', columns )
+  print(df.head())
+  print(dfv.head())
   params = {
     'learning_rate'   : 0.20,
     # 'is_unbalance': 'true', # replaced with scale_pos_weight argument
     'num_leaves'      : 7,  # 2^max_depth - 1
-    'max_depth'       : 3,  # -1 means no limit
+    'max_depth'       : 4,  # -1 means no limit
     'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
     'max_bin'         : 100,  # Number of bucketed bin for feature values
-    'subsample'       : 0.7,  # Subsample ratio of the training instance.
+    'subsample'       : 0.73,  # Subsample ratio of the training instance.
     'subsample_freq'  : 1,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.6,  # Subsample ratio of columns when constructing each tree.
+    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
     'scale_pos_weight': 300 # because training data is extremely unbalanced 
   }
@@ -111,7 +112,7 @@ if '1' in sys.argv:
                             categorical_features=categorical)
   from datetime import datetime
   now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-  bst.save_model(f'files/model_auc={auc:012f}_time={now}.txt')
+  bst.save_model(f'files/model_auc={auc:012f}_time={now}_best={best_iteration}.txt')
 
 if '2' in sys.argv:
   dft = pd.read_csv('var/test_nexts.csv')
@@ -125,7 +126,7 @@ if '2' in sys.argv:
   categorical = list(filter( lambda x: x not in ignores,  ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] ) )
   print('categorical', categorical)
   
-  bst = lgb.Booster(model_file='files/model_auc=00000.990751_time=2018-04-27 04:35:22.txt')
+  bst = lgb.Booster(model_file='files/model_auc=00000.986302_time=2018-04-27 18:05:13.txt')
   sub = pd.DataFrame()
   sub['click_id'] = dft['click_id'].astype('int')
   sub['is_attributed'] = bst.predict(dft[predictors],num_iteration=bst.best_iteration)
