@@ -69,38 +69,64 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 
 if '1' in sys.argv:
   target = 'is_attributed'
-  
-  df = pd.read_csv('var/train_nexts.csv', skiprows=range(1, 8000_0000))# skiprows=range(1, 8000_0000)) #skiprows=range(1,17000_0000) )
+ 
+  if 'simple' in sys.argv:
+    print('load csv')
+    #usecols = [ x[0] for x in sorted( json.load(open('files/base20180428')), key=lambda x:x[1] )[-20:] ] 
+    usecols = 'ip,app,device,os,channel,click_time,attributed_time,is_attributed,hour,var/app_ip_os_count_all,var/app_ip_wday_count_all,var/app_wday_count_all,var/device_hour_ip_count_all,var/device_ip_count_all,var/device_ip_os_count_all,var/device_ip_wday_count_all,var/hour_ip_count_all,var/hour_ip_wday_count_all,var/ip_os_wday_count_all,var/ip_wday_count_all,ip_os_app_device_nextclick,ip_os_app_nextclick,ip_os_app_device_nextnextclick,ip_os_app_device_prevclick'.split(',')
+    print( usecols )
+    df = pd.read_csv('var/train_nexts.csv', usecols=usecols)# skiprows=range(1, 8000_0000)) #skiprows=range(1,17000_0000) )
+    print('finish csv')
+  else:
+    import dask.dataframe as dd
+    import dask.multiprocessing
+    import glob
+    df = dd.read_csv(sorted(glob.glob('var/shrink_chunk/shrink_train_nexts_*.csv')),  # read in parallel
+               sep=',', 
+               parse_dates=['attributed_time'], 
+               blocksize=1000000,
+               )
+    print('collect and convert pandas-dataframe...')
+    df = df.compute(get=dask.multiprocessing.get)
+    print('finish collect and convert pandas-dataframe...')
 
-  df = df.drop(['ip', 'click_time', 'attributed_time'], axis=1)  
+  try:
+    df = df.drop(['ip', 'click_time', 'attributed_time'], axis=1)  
+  except:
+    ...
   columns =  df.columns.tolist()
-  #dfv1 = df[:250_0000]
-  dfv = df[-250_0000:]
-  df  = df[:-250_0000]
+  #dfv0 = df[:250_0000]
 
-  print(df.info())
-  predictors = columns
+  predictors = [x for x in columns if x not in ['is_attributed'] ]
   print('predictors', predictors)
-  categorical = ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] 
+
+  categorical = ['channel', 'os', 'device', 'app',  'hour'] 
+  for cat in categorical:
+    df[cat] = df[cat].astype('category')
+  print(df.info())
+  from sklearn.model_selection import train_test_split
+  dft, dfv = train_test_split(df, test_size=0.1)
+  #dfv = df[len(df) - 250_0000:]
+  #dft = df[:len(df) - 250_0000]
   print('categorical', categorical)
   print('columns', columns )
-  print(df.head())
-  print(dfv.head())
+  print('train-size', len(dft))
+  print('test-size', len(dfv))
   params = {
     'learning_rate'   : 0.20,
     # 'is_unbalance': 'true', # replaced with scale_pos_weight argument
     'num_leaves'      : 7,  # 2^max_depth - 1
-    'max_depth'       : 4,  # -1 means no limit
+    'max_depth'       : 3,  # -1 means no limit
     'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
     'max_bin'         : 100,  # Number of bucketed bin for feature values
-    'subsample'       : 0.73,  # Subsample ratio of the training instance.
+    'subsample'       : 0.77,  # Subsample ratio of the training instance.
     'subsample_freq'  : 1,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
+    'colsample_bytree': 0.77,  # Subsample ratio of columns when constructing each tree.
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
     'scale_pos_weight': 300 # because training data is extremely unbalanced 
   }
   (bst,best_iteration, auc) = lgb_modelfit_nocv(params, 
-                            df, 
+                            dft, 
                             dfv, 
                             predictors, 
                             target, 
@@ -115,15 +141,19 @@ if '1' in sys.argv:
   bst.save_model(f'files/model_auc={auc:012f}_time={now}_best={best_iteration}.txt')
 
 if '2' in sys.argv:
-  dft = pd.read_csv('var/test_nexts.csv')
+  usecols = 'ip,app,device,os,channel,click_time,attributed_time,is_attributed,hour,var/app_ip_os_count_all,var/app_ip_wday_count_all,var/app_wday_count_all,var/device_hour_ip_count_all,var/device_ip_count_all,var/device_ip_os_count_all,var/device_ip_wday_count_all,var/hour_ip_count_all,var/hour_ip_wday_count_all,var/ip_os_wday_count_all,var/ip_wday_count_all,ip_os_app_device_nextclick,ip_os_app_nextclick,ip_os_app_device_nextnextclick,ip_os_app_device_prevclick'.split(',')
   
+  dft = pd.read_csv('var/test_nexts.csv', usecols=usecols)
+  categorical = ['channel', 'os', 'device', 'app',  'hour'] 
+  for cat in categorical:
+    dft[cat] = dft[cat].astype('category')
+
   print(dft.info())
   columns =  dft.columns.tolist()
-  ignores = ['click_id', 'click_time', 'ip', 'is_attributed', 'category']
+  ignores = ['click_id', 'click_time', 'ip', 'is_attributed']
   predictors = [ p for p in columns if p not in ignores ]
   print('columns', columns )
   print('predictors', predictors)
-  categorical = list(filter( lambda x: x not in ignores,  ['channel', 'device', 'os', 'app',  'wday', 'hour', 'day'] ) )
   print('categorical', categorical)
   
   bst = lgb.Booster(model_file='files/model_auc=00000.986302_time=2018-04-27 18:05:13.txt')
