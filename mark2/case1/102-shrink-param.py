@@ -18,19 +18,19 @@ if 'train' in sys.argv:
   key_ft = {}
   for index, obj in enumerate(it):
     key = index//100000
-    for x in list(obj.keys()):
-      if x not in use: 
-        del obj[x]
+    #for x in list(obj.keys()):
+    #  if x not in use: 
+    #    del obj[x]
     # click timeも消す
-    for x in ['click_time']:
-      del obj[x]
+    #for x in ['click_time']:
+    #  del obj[x]
     if key_ft.get(key) is None:
       for _, ft in key_ft.items():
         ft[1].close()
         del ft 
-      _fp = open(f'var/shrink_chunk/shrink_train_nexts_{key:09d}.csv', 'w')
+      _fp = open(f'var/chunk_alot/shrink_train_nexts_{key:09d}.csv', 'w')
       _dict_writer = csv.DictWriter(_fp, fieldnames=list(obj.keys()))
-      key_ft[key] = [_dict_writer, _fp] 
+      key_ft[key] = [ _dict_writer, _fp] 
       key_ft[key][0].writeheader()
     key_ft[key][0].writerow( obj )
     if index%10000 == 0:
@@ -42,17 +42,17 @@ if 'test' in sys.argv:
   key_ft = {}
   for index, obj in enumerate(it):
     key = index//100000
-    for x in list(obj.keys()):
-      if x not in use:
-        del obj[x]
+    #for x in list(obj.keys()):
+    #  if x not in use:
+    #    del obj[x]
     # click timeも消す
-    for x in ['click_time']:
-      del obj[x]
+    #for x in ['click_time']:
+    #  del obj[x]
     
     if key_ft.get(key) is None:
       for _, ft in key_ft.items():
         del ft 
-      key_ft[key] = csv.DictWriter(open(f'var/shrink_chunk/shrink_test_nexts_{key:09d}.csv', 'w'), fieldnames=list(obj.keys()))
+      key_ft[key] = csv.DictWriter(open(f'var/chunk_alot/shrink_test_nexts_{key:09d}.csv', 'w'), fieldnames=list(obj.keys()))
       key_ft[key].writeheader()
     key_ft[key].writerow( obj )
     if index%10000 == 0:

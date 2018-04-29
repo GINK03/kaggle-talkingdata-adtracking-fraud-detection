@@ -81,39 +81,79 @@ if '1' in sys.argv:
     import dask.dataframe as dd
     import dask.multiprocessing
     import glob
-    df = dd.read_csv(sorted(glob.glob('var/shrink_chunk/shrink_train_nexts_*.csv')),  # read in parallel
+    import random
+    print('load csv with dask')
+    dft = dd.read_csv(sorted(glob.glob('var/shrink_chunk/shrink_train_nexts_*.csv'))[:-50],  # read in parallel
+               sep=',', 
+               parse_dates=['attributed_time'], 
+               blocksize=1000000,
+               )
+    dfv = dd.read_csv(sorted(glob.glob('var/shrink_chunk/shrink_train_nexts_*.csv'))[-50:],  # read in parallel
                sep=',', 
                parse_dates=['attributed_time'], 
                blocksize=1000000,
                )
     print('collect and convert pandas-dataframe...')
-    df = df.compute(get=dask.multiprocessing.get)
+    dft = dft.drop(['attributed_time'], axis=1)
+    dft = dft.compute(get=dask.multiprocessing.get)
+    dfv = dfv.drop(['attributed_time'], axis=1)
+    dfv = dfv.compute(get=dask.multiprocessing.get)
     print('finish collect and convert pandas-dataframe...')
 
   try:
-    df = df.drop(['ip', 'click_time', 'attributed_time'], axis=1)  
-  except:
+    df = df.drop(['attributed_time'], axis=1)
+    df = df.drop(['ip', 'click_time'], axis=1)  
+  except Exception as ex:
+    print(ex)
     ...
-  columns =  df.columns.tolist()
+  
+  try:
+    columns =  df.columns.tolist()
+  except NameError as ex:
+    columns =  dft.columns.tolist()
   #dfv0 = df[:250_0000]
 
-  predictors = [x for x in columns if x not in ['is_attributed'] ]
+  predictors = [x for x in columns if x not in ['is_attributed', 'ip'] ]
   print('predictors', predictors)
 
-  categorical = ['channel', 'os', 'device', 'app',  'hour'] 
-  for cat in categorical:
-    df[cat] = df[cat].astype('category')
-  print(df.info())
-  from sklearn.model_selection import train_test_split
-  dft, dfv = train_test_split(df, test_size=0.1)
+  categorical = ['channel', 'app', 'os', 'device', 'hour'] 
+  #for cat in categorical:
+  #  df[cat] = df[cat].astype('category')
+  #print(df.info())
+  if 'random' in sys.argv:
+    print('use random cropping')
+    from sklearn.model_selection import train_test_split
+    dft, dfv = train_test_split(df, test_size=0.1)
+  else:
+    print('use time separate')
+    #split = len(df) - 500_0000
+    #dfv = df[split:len(df)-1]
+    #dft = df[0:split - 5000_0000]
+    # noising...
+    nparam = {'channel': 0.8, 'os':0.8, 'app':0.6}
+    if 'noise' in sys.argv:
+      def noise(prob):
+        def _noise(x):
+          if random.random() < prob:
+            return x
+          else:
+            return 0.0
+        return _noise
+      print('noising...')
+
+      dft[ 'channel' ] = dft[ 'channel' ].apply(noise(nparam['channel']))
+      dft[ 'os' ] = dft[ 'os' ].apply(noise(nparam['os']))
+      dft[ 'app' ] = dft[ 'app' ].apply(noise(nparam['app']))
+      print('finish noising...')
   #dfv = df[len(df) - 250_0000:]
   #dft = df[:len(df) - 250_0000]
   print('categorical', categorical)
   print('columns', columns )
+  print('total-szie', len(dft)+len(dfv))
   print('train-size', len(dft))
   print('test-size', len(dfv))
   params = {
-    'learning_rate'   : 0.20,
+    'learning_rate'   : 0.30,
     # 'is_unbalance': 'true', # replaced with scale_pos_weight argument
     'num_leaves'      : 7,  # 2^max_depth - 1
     'max_depth'       : 3,  # -1 means no limit
@@ -132,17 +172,24 @@ if '1' in sys.argv:
                             target, 
                             objective='binary', 
                             metrics='auc',
-                            early_stopping_rounds=30, 
+                            early_stopping_rounds=140, 
                             verbose_eval=True, 
                             num_boost_round=1000, 
                             categorical_features=categorical)
   from datetime import datetime
   now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
   bst.save_model(f'files/model_auc={auc:012f}_time={now}_best={best_iteration}.txt')
+  open(f'files/noise_auc={auc:012f}_time={now}_best={best_iteration}.json', 'w').write( json.dumps(nparam, indent=2) )
 
 if '2' in sys.argv:
-  usecols = 'ip,app,device,os,channel,click_time,attributed_time,is_attributed,hour,var/app_ip_os_count_all,var/app_ip_wday_count_all,var/app_wday_count_all,var/device_hour_ip_count_all,var/device_ip_count_all,var/device_ip_os_count_all,var/device_ip_wday_count_all,var/hour_ip_count_all,var/hour_ip_wday_count_all,var/ip_os_wday_count_all,var/ip_wday_count_all,ip_os_app_device_nextclick,ip_os_app_nextclick,ip_os_app_device_nextnextclick,ip_os_app_device_prevclick'.split(',')
+  usecols = 'click_id,ip,app,device,os,channel,click_time,hour,var/app_ip_os_count_all,var/app_ip_wday_count_all,var/app_wday_count_all,var/device_hour_ip_count_all,var/device_ip_count_all,var/device_ip_os_count_all,var/device_ip_wday_count_all,var/hour_ip_count_all,var/hour_ip_wday_count_all,var/ip_os_wday_count_all,var/ip_wday_count_all,ip_os_app_device_nextclick,ip_os_app_nextclick,ip_os_app_device_nextnextclick,ip_os_app_device_prevclick'.split(',')
   
+  real = next(open('var/test_nexts.csv')).strip().split(',')
+
+  for u in usecols:
+    if u not in real:
+      print(u)
+  #sys.exit()
   dft = pd.read_csv('var/test_nexts.csv', usecols=usecols)
   categorical = ['channel', 'os', 'device', 'app',  'hour'] 
   for cat in categorical:
@@ -156,7 +203,7 @@ if '2' in sys.argv:
   print('predictors', predictors)
   print('categorical', categorical)
   
-  bst = lgb.Booster(model_file='files/model_auc=00000.986302_time=2018-04-27 18:05:13.txt')
+  bst = lgb.Booster(model_file='files/model_auc=00000.989492_time=2018-04-29 10:44:10_best=819.txt')
   sub = pd.DataFrame()
   sub['click_id'] = dft['click_id'].astype('int')
   sub['is_attributed'] = bst.predict(dft[predictors],num_iteration=bst.best_iteration)
