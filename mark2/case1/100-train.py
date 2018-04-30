@@ -83,20 +83,27 @@ if '1' in sys.argv:
     import glob
     import random
     print('load csv with dask')
-    dft = dd.read_csv(sorted(glob.glob('var/shrink_chunk/shrink_train_nexts_*.csv'))[:-50],  # read in parallel
+    usecols = [ x[0] for x in json.loads(open('files/base2018430').read()) ][:31] 
+    usecols.extend(['attributed_time', 'is_attributed'])
+    dft = dd.read_csv(sorted(glob.glob('var/chunk_alot/shrink_train_nexts_*.csv'))[1000:-50],  # read in parallel
                sep=',', 
                parse_dates=['attributed_time'], 
                blocksize=1000000,
+               usecols=usecols,
                )
-    dfv = dd.read_csv(sorted(glob.glob('var/shrink_chunk/shrink_train_nexts_*.csv'))[-50:],  # read in parallel
+    print(sorted(glob.glob('var/chunk_alot/shrink_train_nexts_*.csv'))[-50:])
+    dfv = dd.read_csv(sorted(glob.glob('var/chunk_alot/shrink_train_nexts_*.csv'))[-50:],  # read in parallel
                sep=',', 
                parse_dates=['attributed_time'], 
                blocksize=1000000,
+               usecols=usecols,
                )
     print('collect and convert pandas-dataframe...')
     dft = dft.drop(['attributed_time'], axis=1)
+    #dft = dft.drop(['ip', 'click_time'], axis=1)  
     dft = dft.compute(get=dask.multiprocessing.get)
     dfv = dfv.drop(['attributed_time'], axis=1)
+    #dfv = dfv.drop(['ip', 'click_time'], axis=1)  
     dfv = dfv.compute(get=dask.multiprocessing.get)
     print('finish collect and convert pandas-dataframe...')
 
@@ -144,6 +151,9 @@ if '1' in sys.argv:
       dft[ 'channel' ] = dft[ 'channel' ].apply(noise(nparam['channel']))
       dft[ 'os' ] = dft[ 'os' ].apply(noise(nparam['os']))
       dft[ 'app' ] = dft[ 'app' ].apply(noise(nparam['app']))
+      dfv[ 'channel' ] = dfv[ 'channel' ].apply(noise(nparam['channel']))
+      dfv[ 'os' ] = dfv[ 'os' ].apply(noise(nparam['os']))
+      dfv[ 'app' ] = dfv[ 'app' ].apply(noise(nparam['app']))
       print('finish noising...')
   #dfv = df[len(df) - 250_0000:]
   #dft = df[:len(df) - 250_0000]
@@ -153,7 +163,7 @@ if '1' in sys.argv:
   print('train-size', len(dft))
   print('test-size', len(dfv))
   params = {
-    'learning_rate'   : 0.30,
+    'learning_rate'   : 0.20,
     # 'is_unbalance': 'true', # replaced with scale_pos_weight argument
     'num_leaves'      : 7,  # 2^max_depth - 1
     'max_depth'       : 3,  # -1 means no limit
@@ -190,7 +200,11 @@ if '2' in sys.argv:
     if u not in real:
       print(u)
   #sys.exit()
-  dft = pd.read_csv('var/test_nexts.csv', usecols=usecols)
+  dft = pd.read_csv('var/test_nexts.csv') #, usecols=usecols)
+  try: dft = dft.drop(['attributed_time'], axis=1);
+  except: ...;
+  try: dft = dft.drop(['ip', 'click_time'], axis=1);
+  except: ...;
   categorical = ['channel', 'os', 'device', 'app',  'hour'] 
   for cat in categorical:
     dft[cat] = dft[cat].astype('category')
@@ -203,9 +217,12 @@ if '2' in sys.argv:
   print('predictors', predictors)
   print('categorical', categorical)
   
-  bst = lgb.Booster(model_file='files/model_auc=00000.989492_time=2018-04-29 10:44:10_best=819.txt')
+  model_file = 'files/model_auc=00000.989086_time=2018-04-30 04:47:14_best=247.txt'
+  sufix = model_file.split('/').pop().replace(' ', '_')
+
+  bst = lgb.Booster(model_file=model_file)
   sub = pd.DataFrame()
   sub['click_id'] = dft['click_id'].astype('int')
   sub['is_attributed'] = bst.predict(dft[predictors],num_iteration=bst.best_iteration)
   
-  sub.to_csv(f'sub_it.csv', index=False)
+  sub.to_csv(f'sub_it_{sufix}.csv', index=False)
